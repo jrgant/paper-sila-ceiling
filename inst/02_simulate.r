@@ -9,7 +9,7 @@ library(qs2)
 source(here::here("inst", "00_constants.r"))
 
 # Print parameter settings and output directory
-cat(rep("-", 40), "\n", "Parameter settings:\n", rep("-", 40), "\n", sep = "")
+cat("\n", rep("-", 40), "\n", "Parameter settings:\n", rep("-", 40), "\n", sep = "")
 cbind(value = sapply(grep("^(?!OUTPUT)", x = ls(), perl = TRUE, value = TRUE), get))
 sapply(ls(pattern = "OUTPUT_DIR"), get)
 
