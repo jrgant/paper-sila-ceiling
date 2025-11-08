@@ -95,8 +95,10 @@ simulate_curves <- function(N,
   long[, t0 := age_scan1 - age_apos]
   long[, xvalue := t0 + (cum_lag_days / 365.25)]
 
+  # calculate age at scan
+  long[, age := age_scan1 + (cum_lag_days / 365.25)]
+
   # generate observations at xvalue
-  #long[, centiloids := do.call(genfun, args = as.list(eval(args)))]
   long[, centiloids := eval(bquote(genfun(..(args)), splice = TRUE))]
   long[, centiloids_measured := centiloids + eval(epsilon)]
 
