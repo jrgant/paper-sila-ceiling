@@ -72,6 +72,8 @@ lu_subid_all_multiscan <- berkadni[, .N, keyby = RID][N > 1, RID]
 berksub <- berkadni[RID %in% lu_subid_all_multiscan]
 setnames(berksub, c("RID", "CENTILOIDS"), c("subid", "val"))
 
+# NOTE: Fitting SILA will throw warnings due to perfect fits in some of the drawn
+#       samples. Traceable to lm() and LOESS fits.
 set.seed(987312344)
 fit <- list()
 fit[["res"]] <- sila(berksub, dt = SILA_DT, val0 = SILA_VAL0, maxi = SILA_MAX_ITER)
