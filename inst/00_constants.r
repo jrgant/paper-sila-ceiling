@@ -36,5 +36,11 @@ SILA_MAX_ITER  <- 200
 OUTPUT_DIR <- here::here("output")
 
 # PRIVATE ADNI DIRECTORIES
+ADNI_DL_DATE <- "27Oct2025"
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
 PRIVATE_OUTPUT_DIR <- file.path(ADNI_PATH, "sila-ceiling-analysis")
+
+# Function: Helper to paste ADNI source dataset filename into a path
+qp <- function(string) {
+  paste0(string, "_", ADNI_DL_DATE, ".csv")
+}

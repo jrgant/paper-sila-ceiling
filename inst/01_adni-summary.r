@@ -32,13 +32,19 @@ theme_set(
 ## ADNI data are stored in a private directory outside of the package. The
 ## path to the directory is stored in the environment variable ADNI_PATH.
 
+## NOTE: The call to unique() when reading in the Berkeley data drops 6
+##       rows that appear to be duplicates.
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
-berk <- fread(file.path(ADNI_PATH, "UCBERKELEY_AMY_6MM_01Nov2024.csv"))
-adnimerge <- fread(file.path(ADNI_PATH, "ADNIMERGE_01Nov2024.csv"))
+berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))
+adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))
 
 ## names to lowercase
 setnames(berk, names(berk), tolower(names(berk)))
 setnames(adnimerge, names(adnimerge), tolower(names(adnimerge)))
+
+## subset to columns needed for estimation
+berk <- berk[, .(rid, scandate, centiloids)]
+adnimerge <- adnimerge[, .(rid, examdate, ptgender, dx, apoe4)]
 
 
 ################################################################################
