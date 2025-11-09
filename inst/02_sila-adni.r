@@ -1,18 +1,12 @@
 ##########################################################################################
 ## SETUP and DATA ##
 ##########################################################################################
-source(here::here("inst", "00_constants.r"))
 
 library(data.table)
 library(silaR)
 library(qs2)
 
-ADNI_DL_DATE <- "27Oct2025"
-
-# Function: Helper to paste ADNI source dataset filename into a path
-qp <- function(string) {
-  paste0(string, "_", ADNI_DL_DATE, ".csv")
-}
+source(here::here("inst", "00_constants.r"))
 
 # ADNIMERGE
 adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))

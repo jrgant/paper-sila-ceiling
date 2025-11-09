@@ -22,7 +22,5 @@ desc_first_scan  <- berkadni[, .SD[1],
                              keyby = subid]
 
 desc_fs_sum <- summary(desc_first_scan[, .(first_scan_date = SCANDATE,
-                                          age_at_first_scan = age,
-                                          num_scans)])
-
-desc_fs_sum |> dim()
+                                           age_first_scan = age,
+                                           num_scans)])
