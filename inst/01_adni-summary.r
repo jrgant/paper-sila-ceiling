@@ -7,7 +7,9 @@ library(here)
 library(ggplot2)
 library(ggthemes)
 library(usethis, include.only = "use_data")
-library(collapse, include.only =  "descr")
+library(collapse, include.only = c("descr", "GRP"))
+
+source(here::here("inst", "00_constants.r"))
 
 theme_set(
   theme_pander(
@@ -69,7 +71,10 @@ berk[, days_since_last_scan := scandate - shift(scandate, n = 1, type = "lag"),
      keyby = rid]
 
 ## Quick summary
-berk[scan_num > 1, .(mean = mean(days_since_last_scan)), keyby = scan_num]
+descr(berk[scan_num > 1, .(lag_days = days_since_last_scan,
+                           lag_years = days_since_last_scan / 365.25)],
+      by = GRP(berk[scan_num > 1], ~ scan_num),
+      Qprobs = NULL, Ndistinct = FALSE)
 
 ## Subset to scans after the first for each patient
 berk_multi_scan <- berk[scan_num > 1]
@@ -77,10 +82,12 @@ berk_multi_scan <- berk[scan_num > 1]
 ## Inspect time since last scan (in days) by scan number.
 ## Decision to use a single vector of scan lags is based on visual inspection,
 ## as these data are simply used to generate plausible amyloid curves.
+## NOTE: With the 27Oct2025 download of ADNI, this plot throws a (benign) warning
+## because only one participant had scan_num=8.
 berk_multi_scan |>
-  ggplot(aes(x = days_since_last_scan)) +
-  geom_density(aes(color = factor(scan_num))) +
-  scale_color_few(name = "Scan number") +
+  ggplot(aes(x = days_since_last_scan / 365.25)) +
+  geom_density(aes(color = scan_num, group = scan_num)) +
+  scale_color_continuous(name = "Scan number") +
   theme_pander()
 
 berk_multi_scan |>
