@@ -72,7 +72,7 @@ fitlist[["simlog_hetero"]] <- fit_sila(fmt_simexp_homo)
 
 
 ##########################################################################################
-## WRITE SILA ##
+## WRITE SILA FITS ##
 ##########################################################################################
 
 qs_save(fitlist, file.path(OUTPUT_DIR, "simulated-sila-fits.qs2"))
