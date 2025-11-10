@@ -38,15 +38,14 @@ theme_set(
 ##       rows that appear to be duplicates.
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
 berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))
-adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))
+names(berk) <- tolower(names(berk))
 
-## names to lowercase
-setnames(berk, names(berk), tolower(names(berk)))
-setnames(adnimerge, names(adnimerge), tolower(names(adnimerge)))
+adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))
+names(adnimerge) <- tolower(names(adnimerge))
 
 ## subset to columns needed for estimation
 berk <- berk[, .(rid, scandate, centiloids)]
-adnimerge <- adnimerge[, .(rid, examdate, ptgender, dx, apoe4)]
+adnimerge <- adnimerge[, .(rid, examdate, age, ptgender, dx, apoe4)]
 
 
 ################################################################################
