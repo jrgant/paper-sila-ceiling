@@ -83,4 +83,4 @@ fit[["resfit"]] <- sila_estimate(fit$res$tsila, df = berksub)
 if (!dir.exists(PRIVATE_OUTPUT_DIR)) dir.create(PRIVATE_OUTPUT_DIR)
 
 qs_save(fit, file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
-fwrite(berksub, file.path(PRIVATE_OUTPUT_DIR, "berkeley_scans_formatted.csv"))
+fwrite(berkadni, file.path(PRIVATE_OUTPUT_DIR, "berkeley_scans_formatted.csv"))
