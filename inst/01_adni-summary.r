@@ -117,9 +117,8 @@ berkadni <- merge(berk,
 
 berkadni[, age_at_scan := round(age_bl + (scandate - examdate_bl) / 365.25, 1)]
 setkeyv(berkadni, c("rid", "scandate"))
-berkadni[, rownum := rowid(rid)][]
 
-berkadni_first_scan <- berkadni[rownum == 1 & !is.na(age_at_scan)]
+berkadni_first_scan <- berkadni[!is.na(age_at_scan), .SD[1], keyby = rid]
 
 berkadni_first_scan[, hist(age_at_scan)]
 
