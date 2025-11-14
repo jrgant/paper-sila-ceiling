@@ -16,7 +16,7 @@ setkeyv(adnimerge, c("rid", "examdate"))
 
 ## Extract baseline dataset
 adni_age_bl <- adnimerge[, .(
-  bl_exam_date = first(examdate),
+  examdate_bl = first(examdate),
   age_bl = first(age),
   dx_bl = first(dx_bl)
 ), keyby = rid]
@@ -40,7 +40,7 @@ berkadni_first_scan <- adnimerge[berkadni_first_scan,
                                  ][, .(rid, scandate, examdate, dx)]
 
 ## Create and add relevant variables to analytic dataset
-berkadni[, yrs_since_bl := (scandate - bl_exam_date) / 365.25]
+berkadni[, yrs_since_bl := (scandate - examdate_bl) / 365.25]
 berkadni[, age := round(age_bl + yrs_since_bl, digits = 1)]
 berkadni[berkadni_first_scan, on = .(rid), j = `:=`(dx_fs = i.dx,
                                                     dx_fs_date = i.examdate)]
