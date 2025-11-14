@@ -36,8 +36,8 @@ berkadni <- berk[!is.na(centiloids), .(rid, scandate, centiloids)
                  ][adni_age_bl, on = .(rid), nomatch = NULL]
 
 ## Include most recent DX status at first scan date
-berkadni_first_scan <- berkadni[, .SD[1], keyby = .(rid, scandate)][, .(rid, scandate)]
-berkadni_first_scan[, joindate := scandate]
+berkadni_first_scan <- berkadni[, .SD[1], keyby = rid
+                               ][, .(rid, scandate, joindate = scandate)]
 berkadni_first_scan <- adnimerge[berkadni_first_scan,
                                  on = .(rid, joindate), roll = TRUE
                                  ][, .(rid, scandate, examdate, dx)]
