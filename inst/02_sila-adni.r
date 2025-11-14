@@ -28,6 +28,9 @@ names(berk) <- tolower(names(berk))
 # ANALYSIS DATASET
 
 ## Inner join, dropping missing centiloids and pulling in baseline information
+## NOTE: There are some minor differences between this dataset and the subsets
+##       used to calculate simulation parameters. Here we drop all non-mutual
+##       matches and missing centiloid values.
 AOUT_NMISS_CENTILOIDS <- berk[, sum(is.na(centiloids))]
 berkadni <- berk[!is.na(centiloids), .(rid, scandate, centiloids)
                  ][adni_age_bl, on = .(rid), nomatch = NULL]
