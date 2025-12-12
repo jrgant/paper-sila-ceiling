@@ -10,13 +10,18 @@ source(here::here("inst", "00_constants.r"))
 sims <- qs_read(file.path(OUTPUT_DIR, "simulated-datasets.qs2"))
 simsila <- qs_read(file.path(OUTPUT_DIR, "simulated-sila-fits.qs2"))
 
-tinytheme("tufte")
 ANNOTATE_COLOR <- "#bf2483"
+GUIDELINE_COLOR <- "#75B30E"
+GRAY <- "#F1F1F1"
+PINK <- "#FF1493"
+TEAL <- "#008080"
 
-plot_curves <- function(dataset, title, simvec = 1:12, subidvec = 1:100) {
-  plt(centiloids_measured ~ xvalue | subid,
-      data = dataset[sim %in% simvec & subid %in% subidvec],
-      type = "b",
+extrafont::loadfonts()
+tinytheme("tufte",
+          fg = "gray40",
+          col.axis = "gray40",
+          family = "Iosevka IBM Plex Flavor")
+
       col = "black",
       facet = ~sim,
       facet.args = list(free = TRUE),
