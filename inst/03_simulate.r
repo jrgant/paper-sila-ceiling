@@ -79,7 +79,9 @@ simexp_hetero <- rbindlist(lapply(expRatesHetero, \(rate_mean) {
         k = curr_k,
         x0 = - (1 / k) * log(apos_threshold + 20)
       ),
-      env = list(curr_k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * 0.1))
+      env = list(
+        curr_k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * SIGMA_HETERO_MULTIPLIER)
+      )
     )
   )
 }), idcol = "sim")
