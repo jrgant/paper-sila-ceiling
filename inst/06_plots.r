@@ -1,8 +1,14 @@
+##########################################################################################
+## SETUP ##
+##########################################################################################
+
 library(data.table)
 library(tinyplot)
+library(qs2)
 
 source(here::here("inst", "00_constants.r"))
-sims <- readRDS(file.path(OUTPUT_DIR, "simulated-datasets.rds"))
+sims <- qs_read(file.path(OUTPUT_DIR, "simulated-datasets.qs2"))
+simsila <- qs_read(file.path(OUTPUT_DIR, "simulated-sila-fits.qs2"))
 
 tinytheme("tufte")
 ANNOTATE_COLOR <- "#bf2483"
