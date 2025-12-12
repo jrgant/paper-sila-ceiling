@@ -41,9 +41,9 @@ plot_curves(dataset = sims$simexp_hetero,
             title = "Heterogeneous exponential curves")
 
 plot_curves(dataset = sims$simlog_homo,
-            title = "Homogeneous exponential curves",
-            subidvec = 1:200)
+            title = "Homogeneous logistic curves")
 
 plot_curves(dataset = sims$simlog_hetero,
-            title = "Heterogeneous exponential curves",
-            subidvec = 1:500)
+            title = "Heterogeneous logistic curves")
+
+
