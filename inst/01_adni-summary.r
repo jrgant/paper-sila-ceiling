@@ -1,8 +1,9 @@
-################################################################################
+##########################################################################################
 ## SETUP ##
-################################################################################
+##########################################################################################
 
 library(data.table)
+library(qs2)
 library(here)
 library(ggplot2)
 library(ggthemes)
@@ -24,9 +25,9 @@ theme_set(
 )
 
 
-################################################################################
+##########################################################################################
 ## LOAD ADNI DATA ##
-################################################################################
+##########################################################################################
 
 ## Access to ADNI data requires a Memorandum of Understanding.
 ## See https://adni.loni.usc.edu for details.
@@ -48,9 +49,12 @@ berk <- berk[, .(rid, scandate, centiloids)]
 adnimerge <- adnimerge[, .(rid, examdate, age, ptgender, dx, apoe4)]
 
 
-################################################################################
-## PROPORTION with N SCANS ##
-################################################################################
+##########################################################################################
+## SIMULATION PARAMETER: PROPORTION with N SCANS ##
+##########################################################################################
+
+## NOTE: Calculate among everyone with a scandate, regardless of missing age or
+## centiloid information.
 
 num_scan_props <-
   berk[, .(num_scans = .N), rid] |>
@@ -60,9 +64,12 @@ num_scan_props <-
 num_scan_props[]
 
 
-################################################################################
-## TIME BETWEEN SCANS ##
-################################################################################
+##########################################################################################
+## SIMULATION PARAMETER: TIME BETWEEN SCANS ##
+##########################################################################################
+
+## NOTE: Calculate among everyone with a scandate, regardless of missing age or
+## centiloid information.
 
 setkeyv(berk, c("rid", "scandate"))
 berk[, scan_num := rowid(rid)]
@@ -98,11 +105,9 @@ berk_multi_scan |>
 scan_lag_days <- berk_multi_scan[, density(days_since_last_scan, bw = "SJ")]
 
 
-################################################################################
-## AGE AT FIRST SCAN ##
-################################################################################
-
-setkeyv(adnimerge, c("rid", "examdate"))
+##########################################################################################
+## CREATE EMPIRICAL ANALYSIS SAMPLE ##
+##########################################################################################
 
 berkadni <- merge(berk,
                   adnimerge[, .(
@@ -110,20 +115,41 @@ berkadni <- merge(berk,
                     examdate_bl = first(examdate),
                     ptgender = first(ptgender),
                     apoe4 = first(apoe4),
-                    dx =  first(dx)
+                    dx_bl =  first(dx)
                   ), keyby = rid],
                   by = "rid",
                   all.x = TRUE)
+NRID_MISS_AGE <- berkadni[is.na(age_bl), uniqueN(rid)]
+berkadni <- berkadni[!is.na(age_bl)]
+NRID_MISS_CENTILOIDS <- berkadni[is.na(centiloids), uniqueN(rid)]
+NSCAN_MISS_CENTILOIDS <- berkadni[is.na(centiloids), .N]
+berkadni <- berkadni[!is.na(centiloids)]
+
+droptable <- data.table(
+  reason  = c("miss_baseline_age", "miss_centiloids", "miss_centiloids"),
+  rowtype = c("subid", "subid", "scan"),
+  value   = c(NRID_MISS_AGE, NRID_MISS_CENTILOIDS, NSCAN_MISS_CENTILOIDS)
+)
+
+
+################################################################################
+## SIMULATION PARAMETER: AGE AT FIRST SCAN ##
+################################################################################
+
+setkeyv(adnimerge, c("rid", "examdate"))
 
 berkadni[, age_at_scan := round(age_bl + (scandate - examdate_bl) / 365.25, 1)]
 setkeyv(berkadni, c("rid", "scandate"))
 
-berkadni_first_scan <- berkadni[!is.na(age_at_scan), .SD[1], keyby = rid]
+berkadni_first_scan <- berkadni[, .SD[1], keyby = rid]
 
+## inspect symmetry of age distribution
 berkadni_first_scan[, hist(age_at_scan)]
 
-agedist_first_scan <- berkadni_first_scan[, .(mean = mean(age_at_scan),
-                                              sd = sd(age_at_scan))]
+agedist_first_scan <- berkadni_first_scan[, .(
+  mean = mean(age_at_scan),
+  sd = sd(age_at_scan)
+)]
 
 agedist_first_scan[]
 
@@ -136,6 +162,45 @@ usethis::use_data(
   num_scan_props,
   scan_lag_days,
   agedist_first_scan,
+  droptable,
   overwrite = TRUE,
   internal = FALSE
 )
+
+
+##########################################################################################
+## ADD VARIABLES to EMPIRICAL DATASET ##
+##########################################################################################
+
+berkadni[, yrs_since_bl := (scandate - examdate_bl) / 365.25]
+berkadni[, age := round(age_bl + yrs_since_bl, digits = 1)]
+
+berkadni[, joindate := scandate]
+adnimerge[, joindate := examdate]
+
+# retrieve most recent cognitive diagnosis relative to scandate
+# dx_scan = diagnosis as of scandate
+berkadni <- adnimerge[, .(rid, joindate, dx_scan = dx, dx_date = examdate)
+                      ][berkadni, on = .(rid, joindate), roll = TRUE]
+
+# clean dx variables
+berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == "Dementia", "AD",
+                                    dx_bl == "CN", "CN",
+                                    dx_bl == "MCI", "MCI",
+                                    default = NA_character_),
+                dx_scan_clean = fcase(dx_scan == "Dementia", "AD",
+                                      dx_scan == "CN", "CN",
+                                      dx_scan == "MCI", "MCI",
+                                      default = NA_character_))]
+
+berkadni[, .N, .(dx_bl, dx_bl_clean)]
+berkadni[, .N, .(dx_scan, dx_scan_clean)]
+
+
+##########################################################################################
+## WRITE PRIVATE DATA OBJECTS ##
+##########################################################################################
+
+# create the directory if it does not exist
+if (!dir.exists(PRIVATE_OUTPUT_DIR)) dir.create(PRIVATE_OUTPUT_DIR)
+qs_save(berkadni, file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
