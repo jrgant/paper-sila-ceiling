@@ -96,12 +96,6 @@ berk_multi_scan |>
   scale_color_continuous(name = "Scan number") +
   theme_pander()
 
-berk_multi_scan |>
-  ggplot(aes(x = days_since_last_scan)) +
-  geom_histogram(color = "white") +
-  facet_wrap(vars(scan_num)) +
-  theme_pander()
-
 scan_lag_days <- berk_multi_scan[, density(days_since_last_scan, bw = "SJ")]
 
 
