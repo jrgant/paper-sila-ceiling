@@ -10,7 +10,8 @@ simulate_curves(
   scan_dist = num_scan_props,
   lag_dist = scan_lag_days,
   age_scan1 = agedist_first_scan,
-  age_apos,
+  age_apos_fun,
+  age_apos_args,
   apos_threshold,
   genfun = NULL,
   args = NULL,
@@ -33,7 +34,10 @@ for the number of days between two of a given individual's PET scans.}
 \item{age_scan1}{A list specifying the mean and standard deviation
 for the age distribution at first PET scan. E.g. \code{list(mean = 50, sd = 5)}.}
 
-\item{age_apos}{A list specifying the mean and standard deviation for the age
+\item{age_apos_fun}{A function that generates random observations from a
+distribution (e.g., rnorm, rgamma). Given as a string.}
+
+\item{age_apos_args}{A list specifying the mean and standard deviation for the age
 at which a patient's amyloid level becomes positive, based on the
 centiloid threshold specified in \code{Apos_threshold}.}
 

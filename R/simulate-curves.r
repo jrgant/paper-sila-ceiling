@@ -9,7 +9,9 @@
 #'   for the number of days between two of a given individual's PET scans.
 #' @param age_scan1 A list specifying the mean and standard deviation
 #'   for the age distribution at first PET scan. E.g. `list(mean = 50, sd = 5)`.
-#' @param age_apos A list specifying the mean and standard deviation for the age
+#' @param age_apos_fun A function that generates random observations from a
+#'   distribution (e.g., rnorm, rgamma). Given as a string.
+#' @param age_apos_args A list specifying the mean and standard deviation for the age
 #'   at which a patient's amyloid level becomes positive, based on the
 #'   centiloid threshold specified in `Apos_threshold`.
 #' @param apos_treshhold The centiloid value at which a scan/individual is
@@ -32,7 +34,8 @@ simulate_curves <- function(N,
                             scan_dist = num_scan_props,
                             lag_dist = scan_lag_days,
                             age_scan1 = agedist_first_scan,
-                            age_apos,
+                            age_apos_fun,
+                            age_apos_args,
                             apos_threshold,
                             genfun = NULL,
                             args = NULL,
@@ -67,7 +70,8 @@ simulate_curves <- function(N,
                                         size = N,
                                         replace = TRUE,
                                         prob = scan_dist$P),
-                     age_apos = rnorm(N, mean = age_apos$mean, sd = age_apos$sd),
+                     age_apos = do.call(age_apos_fun, args = c(list(n = N), age_apos_args)),
+                     ## age_apos = rnorm(N, mean = age_apos$mean, sd = age_apos$sd),
                      age_scan1 = rnorm(N, age_scan1$mean, age_scan1$sd))
 
   # handle the case of static_vars being provided as a call
