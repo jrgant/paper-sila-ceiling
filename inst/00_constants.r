@@ -21,16 +21,10 @@ SIGMA_HETERO_MULTIPLIER <- 0.1
 NOISE_MU <- 0
 NOISE_SD <- 5
 
-## Source for mean age at amyloid positivity (and standard deviation):
-##   Betthauser, Bilgel & Koscik et al. (2022-11) Multi-method investigation of factors
-##   influencing amyloid onset and impairment in three cohorts, Brain.
-AGE_APOS_MU <- 68.5
-AGE_APOS_SD <- 8.7
-
 # SILA SETTINGS
 SILA_DT        <- 0.25
 SILA_VAL0      <- APOS_THRESHOLD
-SILA_MAX_ITER  <- 200
+SILA_MAX_ITER  <- 1000
 
 # PUBLIC RESULTS OUTPUT
 OUTPUT_DIR <- here::here("output")

@@ -5,12 +5,21 @@
 pkgload::load_all()
 library(data.table)
 library(qs2)
+library(MASS, include.only = "gamma.shape")
 
 source(here::here("inst", "00_constants.r"))
+empfit <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
+
+# Fit an intercept-only model for the distribution of age at amyloid positivity, as
+# estimated by the SILA fit in the empirical dataset.
+# Shape and rate parameter calculation based on gfit$family$simulate
+gfit <- glm(empfit$resfit$estaget0 ~ 1, family = Gamma(link = "identity"))
+AGE_APOS_SHAPE <- gamma.shape(gfit)$alpha # 28.44322
+AGE_APOS_RATE  <- unname(gamma.shape(gfit)$alpha / coef(gfit)[1]) # 0.3647797
 
 # Print parameter settings and output directory
 cat("\n", rep("-", 40), "\n", "Parameter settings:\n", rep("-", 40), "\n", sep = "")
-cbind(value = sapply(grep("^(?!OUTPUT)", x = ls(), perl = TRUE, value = TRUE), get))
+cbind(value = sapply(grep("^(?!OUTPUT|qp)", x = ls(), perl = TRUE, value = TRUE), get))
 sapply(ls(pattern = "OUTPUT_DIR"), get)
 
 # Function: A simple wrapper around simulate_curves() that sets the static parameters
@@ -22,7 +31,8 @@ simquick <- function(...) {
     scan_dist = num_scan_props,
     lag_dist = scan_lag_days,
     age_scan1 = agedist_first_scan,
-    age_apos = list(mean = AGE_APOS_MU, sd = AGE_APOS_SD),
+    age_apos_fun = "rgamma",
+    age_apos_args = list(shape = AGE_APOS_SHAPE, rate = AGE_APOS_RATE),
     apos_threshold = APOS_THRESHOLD,
     epsilon = e(rnorm(.N, sd = 5)),
     ...
