@@ -19,7 +19,7 @@ fmt_sim <- function(simdata) {
   # SILA does not handle the occasional extremes produced by exponential simulations
   tmp <- simdata[centiloids_measured <= 350]
   lu_multiscan <- tmp[, .N, .(sim, subid)][N > 1]
-  multiscan_subset <- simdata[lu_multiscan, on = .(sim, subid)]
+  multiscan_subset <- tmp[lu_multiscan, on = .(sim, subid)]
   stopifnot(all(multiscan_subset[, N] > 1))
   out <- multiscan_subset[, .(sim, subid, age, val = centiloids_measured)]
   setkeyv(out, c("sim", "subid", "age"))
