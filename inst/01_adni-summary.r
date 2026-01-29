@@ -40,9 +40,12 @@ theme_set(
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
 berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))
 names(berk) <- tolower(names(berk))
+setkeyv(berk, c("rid", "scandate"))
+
 
 adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))
 names(adnimerge) <- tolower(names(adnimerge))
+setkeyv(adnimerge, c("rid", "examdate"))
 
 ## subset to columns needed for estimation
 berk <- berk[, .(rid, scandate, centiloids)]
@@ -113,6 +116,7 @@ berkadni <- merge(berk,
                   ), keyby = rid],
                   by = "rid",
                   all.x = TRUE)
+setkeyv(berkadni, c("rid", "scandate"))
 NRID_MISS_AGE <- berkadni[is.na(age_bl), uniqueN(rid)]
 berkadni <- berkadni[!is.na(age_bl)]
 NRID_MISS_CENTILOIDS <- berkadni[is.na(centiloids), uniqueN(rid)]
@@ -130,10 +134,7 @@ droptable <- data.table(
 ## SIMULATION PARAMETER: AGE AT FIRST SCAN ##
 ################################################################################
 
-setkeyv(adnimerge, c("rid", "examdate"))
-
 berkadni[, age_at_scan := round(age_bl + (scandate - examdate_bl) / 365.25, 1)]
-setkeyv(berkadni, c("rid", "scandate"))
 
 berkadni_first_scan <- berkadni[, .SD[1], keyby = rid]
 
