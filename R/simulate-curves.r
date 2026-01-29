@@ -65,14 +65,15 @@ simulate_curves <- function(N,
   }
 
   # initial dataset with parameters external to the curve-generating function set
-  init <- data.table(subid = seq_len(N),
-                     num_scans = sample(scan_dist$num_scans,
-                                        size = N,
-                                        replace = TRUE,
-                                        prob = scan_dist$P),
-                     age_apos = do.call(age_apos_fun, args = c(list(n = N), age_apos_args)),
-                     ## age_apos = rnorm(N, mean = age_apos$mean, sd = age_apos$sd),
-                     age_scan1 = rnorm(N, age_scan1$mean, age_scan1$sd))
+  init <- data.table(
+    subid = seq_len(N),
+    num_scans = sample(scan_dist$num_scans,
+                       size = N,
+                       replace = TRUE,
+                       prob = scan_dist$P),
+    age_apos = do.call(age_apos_fun, args = c(list(n = N), age_apos_args)),
+    age_scan1 = rnorm(N, age_scan1$mean, age_scan1$sd)
+  )
 
   # handle the case of static_vars being provided as a call
   varnames <- names(static_vars)[names(static_vars) != ""]
