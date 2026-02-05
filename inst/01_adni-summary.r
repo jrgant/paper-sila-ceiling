@@ -117,16 +117,29 @@ berkadni <- merge(berk,
                   by = "rid",
                   all.x = TRUE)
 setkeyv(berkadni, c("rid", "scandate"))
-NRID_MISS_AGE <- berkadni[is.na(age_bl), uniqueN(rid)]
-berkadni <- berkadni[!is.na(age_bl)]
-NRID_MISS_CENTILOIDS <- berkadni[is.na(centiloids), uniqueN(rid)]
-NSCAN_MISS_CENTILOIDS <- berkadni[is.na(centiloids), .N]
-berkadni <- berkadni[!is.na(centiloids)]
 
+NROW_BERKADNI_INIT       <- berkadni[, .N]
+NRID_BERKADNI_INIT       <- berkadni[, uniqueN(rid)]
+NROW_MISS_AGE            <- berkadni[is.na(age_bl), .N]
+NRID_MISS_AGE            <- berkadni[is.na(age_bl), uniqueN(rid)]
+NROW_BERKADNI_NOMISS_AGE <- berkadni[!is.na(age_bl), .N]
+NRID_BERKADNI_NOMISS_AGE <- berkadni[!is.na(age_bl), uniqueN(rid)]
+NRID_MISS_CL             <- berkadni[is.na(centiloids), uniqueN(rid)]
+NSCAN_MISS_CL            <- berkadni[is.na(centiloids), .N]
+NRID_MISS_CL             <- berkadni[is.na(centiloids), uniqueN(rid)]
+
+RID_DROP <- berkadni[!is.na(age_bl) & !is.na(centiloids), .(
+  first_nomiss_cent = min(scan_num),
+  last_nomiss_cent = max(scan_num)
+), rid][first_nomiss_cent > 1 & first_nomiss_cent == last_nomiss_cent][, rid]
+NRID_MISS_ONESCAN_NOMISS_CL <- length(RID_DROP)
+
+
+## TODO: 2026-02-04: add additional numbers above to droptable
 droptable <- data.table(
   reason  = c("miss_baseline_age", "miss_centiloids", "miss_centiloids"),
   rowtype = c("subid", "subid", "scan"),
-  value   = c(NRID_MISS_AGE, NRID_MISS_CENTILOIDS, NSCAN_MISS_CENTILOIDS)
+  value   = c(NRID_MISS_AGE, NRID_MISS_CL, NSCAN_MISS_CL)
 )
 
 
@@ -134,9 +147,8 @@ droptable <- data.table(
 ## SIMULATION PARAMETER: AGE AT FIRST SCAN ##
 ################################################################################
 
-berkadni[, age_at_scan := round(age_bl + (scandate - examdate_bl) / 365.25, 1)]
-
-berkadni_first_scan <- berkadni[, .SD[1], keyby = rid]
+berkadni[, age_at_scan := age_bl + (scandate - examdate_bl) / 365.25]
+berkadni_first_scan <- berkadni[!is.na(age_bl), .SD[1], keyby = rid]
 
 ## inspect symmetry of age distribution
 berkadni_first_scan[, hist(age_at_scan)]
