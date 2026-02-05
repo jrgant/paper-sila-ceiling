@@ -9,9 +9,24 @@ library(ggthemes)
 library(ggtext)
 
 source(here::here("inst", "00_constants.r"))
+
+# Empirical data
+empsila <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
+
+berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
+lu_subid_all_multiscan <- berkadni[, .(
+  num_scans = .N,
+  miss_age = is.na(age_at_scan[1]),
+  two_cl = sum(!is.na(centiloids)) > 1
+), by = rid][num_scans > 1 & miss_age == FALSE & two_cl == TRUE][, rid]
+berkadni <- berkadni[rid %in% lu_subid_all_multiscan]
+setkeyv(berkadni, c("rid", "scandate"))
+
+# Simulated data
 sims <- qs_read(file.path(OUTPUT_DIR, "simulated-datasets.qs2"))
 simsila <- qs_read(file.path(OUTPUT_DIR, "simulated-sila-fits.qs2"))
 
+# Global aesthetics
 ANNOTATE_COLOR <- "#bf2483"
 GUIDELINE_COLOR <- "#75B30E"
 GRAY <- "#F1F1F1"

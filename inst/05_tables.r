@@ -11,11 +11,14 @@ source(here::here("inst", "00_constants.r"))
 
 berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
 empsila <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
-## multiscan <- as.data.table(empsila$resfit)
-## setkeyv(multiscan, c("subid", "scandate"))
 
-# extract row corresponding to first PET scan date
-firstscan <- berkadni[order(rid, scandate), .SD[1], keyby = rid]
+# IDs for subjects with multiple PET scans, non-missing age, and at least two non-missing
+# centiloid measurements
+lu_subid_all_multiscan <- berkadni[, .(
+  num_scans = .N,
+  miss_age = is.na(age_at_scan[1]),
+  two_cl = sum(!is.na(centiloids)) > 1
+), by = rid][num_scans > 1 & miss_age == FALSE & two_cl == TRUE][, rid]
 
 # identify individuals with more than 1 PET scan
 lu_subid_multiscan <- berkadni[, .N, rid][N > 1, rid]
