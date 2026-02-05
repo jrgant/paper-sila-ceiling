@@ -180,7 +180,7 @@ usethis::use_data(
 ##########################################################################################
 
 berkadni[, yrs_since_bl := (scandate - examdate_bl) / 365.25]
-berkadni[, age := round(age_bl + yrs_since_bl, digits = 1)]
+berkadni[, age := age_bl + yrs_since_bl]
 
 berkadni[, joindate := scandate]
 adnimerge[, joindate := examdate]
