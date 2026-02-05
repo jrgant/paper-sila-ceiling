@@ -17,6 +17,7 @@ Imports:
     foreach (>= 1.5.2),
     future (>= 1.67.0),
     ggplot2 (>= 4.0.0),
+    ggtext (>= 0.1.2),
     ggthemes (>= 5.1.0),
     here (>= 1.0.1),
     pkgload (>= 1.4.0),
