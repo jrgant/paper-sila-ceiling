@@ -93,7 +93,7 @@ berk_multi_scan <- berk[scan_num > 1]
 ## as these data are simply used to generate plausible amyloid curves.
 ## NOTE: With the 27Oct2025 download of ADNI, this plot throws a (benign) warning
 ## because only one participant had scan_num=8.
-berk_multi_scan |>
+plot_multiscan <- berk_multi_scan |>
   ggplot(aes(x = days_since_last_scan / 365.25)) +
   geom_density(aes(color = scan_num, group = scan_num)) +
   scale_color_continuous(name = "Scan number") +
