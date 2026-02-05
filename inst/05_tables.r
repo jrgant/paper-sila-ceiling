@@ -5,7 +5,8 @@
 library(data.table)
 library(qs2)
 library(flextable)
-library(collapse, include.only = "descr")
+library(officer)
+library(stringr, include.only = "str_replace")
 
 source(here::here("inst", "00_constants.r"))
 
@@ -20,26 +21,98 @@ lu_subid_all_multiscan <- berkadni[, .(
   two_cl = sum(!is.na(centiloids)) > 1
 ), by = rid][num_scans > 1 & miss_age == FALSE & two_cl == TRUE][, rid]
 
-# identify individuals with more than 1 PET scan
-lu_subid_multiscan <- berkadni[, .N, rid][N > 1, rid]
+# extract row corresponding to first PET scan date
+firstscan <- berkadni[order(rid, scandate), .SD[1], keyby = rid][!is.na(age_bl)]
+firstscan[, multi := factor(as.numeric(rid %in% lu_subid_all_multiscan),
+                            levels = c(1, 0),
+                            labels = c("Multiple Scans", "Single Scan"))]
+firstscan[, days_since_bl := yrs_since_bl * 365.25]
 
 
 ##########################################################################################
 ## SUMMARIES ##
 ##########################################################################################
 
-catvars <- c("dx_bl_clean", "dx_scan_clean")
-contvars <- c("scandate", "yrs_since_bl", "age")
+catvars  <- c("dx_bl_clean", "dx_scan_clean")
+contvars <- c("days_since_bl", "age")
 
-sum_fs_all <- collapse::descr(
-  firstscan[, .SD, .SDcols = c(catvars, contvars)]
+tsum <- firstscan[, .SD, .SDcols = c(contvars, catvars, "multi")] |>
+  summarizor(by = "multi", overall_label = "Overall")
+
+class(tsum) <- c("data.table", class(tsum))
+
+varLabels <- c("age"           = "Age at first scan",
+               "days_since_bl" = "Days since baseline exam",
+               "dx_bl_clean"   = "Cognitive diagnosis at baseline exam",
+               "dx_scan_clean" = "Cognitive diagnosis at first scan")
+
+tsum[, variable := factor(variable, levels = names(varLabels), labels = varLabels)]
+
+set_flextable_defaults(font.family = "Arial", padding = 3)
+table1 <- tsum |>
+  as_flextable(spread_first_col = TRUE) |>
+  delete_columns(j = c(2, 4, 6)) |>
+  merge_h(i = c(1, 5, 9, 14)) |>
+  bold(i = c(1, 5, 9, 14)) |>
+  footnote(j = 2, part = "header",
+           ref_symbols = "a ",
+           value = as_paragraph(
+             "Empirical sample used to fit the SILA (sampled iterative ",
+             "local approximation) algorithm. Subjects must have had age at first ",
+             "scan and at least two non-missing centiloid measurements available."
+           )) |>
+  footnote(j = 4, part = "header",
+           ref_symbols = "b ",
+           value = as_paragraph(
+             "Empirical sample used to estimate age distribution at first PET scan ",
+             "and proportion of individuals with a given number of scans."
+           )) |>
+  footnote(i = c(9, 14), j = 1,
+           ref_symbols = "c ",
+           value = as_paragraph(
+             "Cognitive diagnoses shown for context. As we did not use information ",
+             "on cognitive status in the analysis, we did not exclude individuals for ",
+             "missing data on the relevant variables. Percentages may not add to 100 ",
+             "due to rounding."
+           )) |>
+  add_footer_row(
+    values = as_paragraph(
+      as_i("Abbreviations:"), " ",
+      "CN, cognitively normal; IQR, interquartile range; ",
+      "MCI, mild cognitive impairment; PET, positron emission tomography; ",
+      "SD, standard deviation"
+    ),
+    colwidths = 4,
+    top = FALSE
+  ) |>
+  autofit()
+table1
+
+# Gets rows that report ranges
+range_rows <- which(
+  sapply(table1$body$content$data[, "stat"], \(x) x$txt[1] %like% "Range")
 )
 
-sum_fs_one <- collapse::descr(
-  firstscan[rid %notin% lu_subid_multiscan, .SD, .SDcols = c(catvars, contvars)]
+# Helper function: seek out hyphens used to depict ranges and replace them
+# with en dashes
+replace_hyphen <- function(table, rows, columns) {
+  tmp <- table
+  for (i in columns) {
+    for (j in rows) {
+      tmp$body$content$data[, i][[j]]$txt <- str_replace(
+        tmp$body$content$data[, i][[j]]$txt, " - ", " – "
+      )
+    }
+  }
+  tmp
+}
+
+# Hyphen -> en dash
+table1 <- replace_hyphen(
+  table1,
+  rows = range_rows,
+  columns = c("Multiple Scans@blah", "Single Scan@blah", "Overall@blah")
 )
 
-sum_fs_multi <- collapse::descr(
-  firstscan[rid %in% lu_subid_multiscan, .SD, .SDcols = c(catvars, contvars)]
-)
-
+flextable::save_as_html(table1,
+                        path = file.path(OUTPUT_DIR, "table1.html"))
