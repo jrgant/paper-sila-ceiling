@@ -44,6 +44,87 @@ theme_set(theme_pander(base_family = "IBM Plex Sans",
 
 
 
+##########################################################################################
+## FIGURE 1: SILA FITS to EMPIRICAL DATA ##
+##########################################################################################
+
+lapply(empsila$res, setDT)
+setDT(empsila$resfit)
+
+empsila$resfit |>
+  ggplot(aes(x = estdtt0)) +
+  geom_hline(aes(yintercept = APOS_THRESHOLD),
+             color = GUIDELINE_COLOR,
+             linetype = "longdash") +
+  geom_vline(aes(xintercept = 0),
+             color = GUIDELINE_COLOR,
+             linetype = "longdash") +
+  geom_line(aes(y = val, group = subid), linewidth = 0.1, alpha = 0.1) +
+  geom_point(aes(y = val), size = 0.5, alpha = 0.1) +
+  geom_line(aes(y = estval), color = "deep pink") +
+  annotate("text", x = -Inf, y = 20 - 3, vjust = 1, hjust = -0.1,
+           label = " AMYLOID POSITIVITY THRESHOLD",
+           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+  annotate("text", x = 0 + 0.9, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
+           label = "AMYLOID POSITIVITY ONSET ",
+           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+  scale_x_continuous(expand = c(0, 0)) +
+  labs(x = "**Years**<br>Relative to Amyloid Positivity Onset",
+       y = "**Centiloids**")
+
+ggsave(file.path(OUTPUT_DIR, "figure1.pdf"), width = 4.5, height = 4.5)
+ggsave(file.path(OUTPUT_DIR, "figure1.png"), width = 4.5, height = 4.5, dpi = 600)
+
+
+##########################################################################################
+## FIGURE 2: SILA FITS to SIMULATED DATA ##
+##########################################################################################
+
+silasim_list <- rbindlist(list(
+  exphom = rbindlist(lapply(simsila$simexp_homo,   \(.x) .x$resfit)),
+  exphet = rbindlist(lapply(simsila$simexp_hetero, \(.x) .x$resfit)),
+  loghom = rbindlist(lapply(simsila$simlog_homo,   \(.x) .x$resfit)),
+  loghet = rbindlist(lapply(simsila$simlog_hetero, \(.x) .x$resfit))
+), idcol = "scenario")
+
+silasim_list[, `:=`(
+  genfun = fcase(
+    scenario %like% "^exp", "Exponential",
+    scenario %like% "^log", "Logistic"
+  ),
+  variat = fcase(
+    scenario %like% "hom$", "Homogeneous",
+    scenario %like% "het$", "Heterogeneous"
+  )
+)]
+
+silasim_list[, variat := factor(variat, levels = c("Homogeneous", "Heterogeneous"))]
+setkeyv(silasim_list, c("scenario", "sim", "estdtt0"))
+
+silasim_list |>
+  ggplot(aes(estdtt0, estval)) +
+  geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR, linetype = "longdash") +
+  geom_hline(aes(yintercept = APOS_THRESHOLD),
+             color = GUIDELINE_COLOR, linetype = "longdash") +
+  geom_line(aes(group = sim), alpha = 0.2) +
+  facet_grid(vars(genfun), vars(variat),
+             labeller = labeller(genfun = toupper, variat = toupper)) +
+  ylim(c(-20, 250)) +
+  xlim(c(-20, 40)) +
+  annotate("text", x = Inf, y = 20 - 3, vjust = 1, hjust = 1.1,
+           label = " AMYLOID POSITIVITY THRESHOLD",
+           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+  annotate("text", x = 0 + 0.67, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
+           label = "AMYLOID POSITIVITY ONSET ",
+           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+  labs(x = "**Years**<br>Relative to Amyloid Positivity Onset",
+       y = "**Centiloids**<br>SILA Estimate") +
+  theme(strip.text.x = element_text(margin = margin(b = 3, t = 3)),
+        strip.text.y = element_text(margin = margin(l = 3, r = 3)))
+
+ggsave(file.path(OUTPUT_DIR, "figure2.pdf"), width = 6.5, height = 6.5)
+ggsave(file.path(OUTPUT_DIR, "figure2.png"), width = 6.5, height = 6.5, dpi = 600)
+
 
 ##########################################################################################
 ## SUPPLEMENTAL FIGURE 1-4: SIMULATION PLOTS ##
