@@ -191,17 +191,18 @@ berkadni <- adnimerge[, .(rid, joindate, dx_scan = dx, dx_date = examdate)
                       ][berkadni, on = .(rid, joindate), roll = TRUE]
 
 # clean dx variables
-berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == "Dementia", "AD",
+berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == "Dementia", "Dementia",
                                     dx_bl == "CN", "CN",
                                     dx_bl == "MCI", "MCI",
                                     default = NA_character_),
-                dx_scan_clean = fcase(dx_scan == "Dementia", "AD",
+                dx_scan_clean = fcase(dx_scan == "Dementia", "Dementia",
                                       dx_scan == "CN", "CN",
                                       dx_scan == "MCI", "MCI",
                                       default = NA_character_))]
 
 berkadni[, .N, .(dx_bl, dx_bl_clean)]
 berkadni[, .N, .(dx_scan, dx_scan_clean)]
+berkadni[, .N, .(dx_bl_clean, dx_scan_clean)]
 
 
 ##########################################################################################
