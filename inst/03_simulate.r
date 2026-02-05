@@ -18,8 +18,8 @@ estaget0 <- as.data.table(
 )[, .(estaget0 = first(estaget0)), keyby = subid][, estaget0]
 
 gfit <- glm(estaget0 ~ 1, family = Gamma(link = "identity"))
-AGE_APOS_SHAPE <- gamma.shape(gfit)$alpha # 27.23918
-AGE_APOS_RATE  <- unname(gamma.shape(gfit)$alpha / coef(gfit)[1]) # 0.3542678
+AGE_APOS_SHAPE <- gamma.shape(gfit)$alpha # 25.31755
+AGE_APOS_RATE  <- unname(gamma.shape(gfit)$alpha / coef(gfit)[1]) # 0.3239963
 
 # Print parameter settings and output directory
 cat("\n", rep("-", 40), "\n", "Parameter settings:\n", rep("-", 40), "\n", sep = "")
