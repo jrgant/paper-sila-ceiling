@@ -140,8 +140,8 @@ simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
     args = e(x = xvalue, L = L, k = k, x0 = x0),
     static_vars = substitute(
       expr = e(
-        L = rnorm(NDAT, mean = fmax_mean, sd = fmax_mean * 0.1),
-        k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * 0.1),
+        L = rnorm(NDAT, mean = fmax_mean, sd = fmax_mean * SIGMA_HETERO_MULTIPLIER),
+        k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * SIGMA_HETERO_MULTIPLIER),
         x0 = log((L / apos_threshold) - 1) / k
       ),
       env = list(fmax_mean = curr_fmax_mean, rate_mean = curr_rate_mean)
