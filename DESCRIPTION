@@ -21,8 +21,7 @@ Imports:
     here (>= 1.0.1),
     pkgload (>= 1.4.0),
     qs2 (>= 0.1.5),
-    silaR,
-    tinyplot (>= 0.5.0)
+    silaR
 Remotes:
     github::Betthauser-Neuro-Lab/silaR@3a289e7
 Depends: 
