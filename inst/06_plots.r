@@ -3,8 +3,10 @@
 ##########################################################################################
 
 library(data.table)
-library(tinyplot)
 library(qs2)
+library(ggplot2)
+library(ggthemes)
+library(ggtext)
 
 source(here::here("inst", "00_constants.r"))
 sims <- qs_read(file.path(OUTPUT_DIR, "simulated-datasets.qs2"))
@@ -16,49 +18,58 @@ GRAY <- "#F1F1F1"
 PINK <- "#FF1493"
 TEAL <- "#008080"
 
-extrafont::loadfonts()
-tinytheme("tufte",
-          fg = "gray40",
-          col.axis = "gray40",
-          family = "Iosevka IBM Plex Flavor")
+suppressMessages(extrafont::loadfonts())
+theme_set(theme_pander(base_family = "IBM Plex Sans",
+                       base_size = 10,
+                       boxes = TRUE,
+                       nomargin = FALSE,
+                       gm = FALSE) +
+            theme(axis.title.x = element_markdown(margin = margin(t = 15)),
+                  axis.title.y = element_markdown(margin = margin(r = 15))))
+
+
 
 
 ##########################################################################################
-## SIMULATION PLOTS ##
+## SUPPLEMENTAL FIGURE 1-4: SIMULATION PLOTS ##
 ##########################################################################################
 
-plot_curves <- function(dataset, title, numsim = 12, numsubid = 50) {
+plot_curves <- function(dataset, title, numsim = 6, numsubid = 100,
+                        filename = NULL, win = NULL, hin = NULL, dpi = 300) {
   lu_multiscan <- dataset[, .N, .(sim, subid)][N > 1]
   submatch <- lu_multiscan[sim %in% sample(unique(sim), size = numsim),
                            .(subid = sample(subid, size = numsubid)),
                            keyby = sim]
-  plt(centiloids_measured ~ xvalue | factor(subid),
-      data = dataset[submatch, on = .(sim, subid)],
-      type = "p",
-      col = "black",
-      facet = ~sim,
-      facet.args = list(cex = 0, free = TRUE),
-      pch = 16,
-      cex = 0.5,
-      main = title,
-      legend = "none",
-      grid = FALSE,
-      frame = FALSE)
-  plt_add(type = type_lines(), lwd = 0.5, alpha = 0.4)
-  plt_add(type = type_vline(v = 0), lty = 2, col = ANNOTATE_COLOR)
-  plt_add(type = type_hline(h = APOS_THRESHOLD), lty = 2, col = ANNOTATE_COLOR)
+  dataset[submatch, on = .(sim, subid)] |>
+    ggplot(aes(xvalue, centiloids_measured)) +
+    geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR, linetype = "longdash") +
+    geom_hline(aes(yintercept = APOS_THRESHOLD),
+               color = GUIDELINE_COLOR, linetype = "longdash") +
+    geom_line(aes(group = subid), linewidth = 0.4, alpha = 0.4) +
+    geom_point(size = 0.3) +
+    facet_wrap(vars(sim)) +
+    ylim(c(-20, 200)) +
+    xlim(c(-20, 40)) +
+    labs(x = "Time (Ref. Amyloid Positivity)", y = "Centiloids (Measured)") +
+    theme(strip.text. = element_blank())
+
+  FNAME <- file.path(OUTPUT_DIR, filename)
+  ggsave(paste0(FNAME, ".pdf"), width = win, height = hin)
+  ggsave(paste0(FNAME, ".png"), width = win, height = hin, dpi = dpi)
 }
 
+set.seed(893875)
 plot_curves(dataset = sims$simexp_homo,
-            title = "Homogeneous exponential curves")
+            filename = "suppfig1", win = 6.5, hin = 6.5 / 1.35)
 
+set.seed(92383484)
 plot_curves(dataset = sims$simexp_hetero,
-            title = "Heterogeneous exponential curves")
+            filename = "suppfig2", win = 6.5, hin = 6.5 / 1.35)
 
+set.seed(23344588)
 plot_curves(dataset = sims$simlog_homo,
-            title = "Homogeneous logistic curves")
+            filename = "suppfig3", win = 6.5, hin = 6.5 / 1.35)
 
+set.seed(49418884)
 plot_curves(dataset = sims$simlog_hetero,
-            title = "Heterogeneous logistic curves")
-
-
+            filename = "suppfig4", win = 6.5, hin = 6.5 / 1.35)
