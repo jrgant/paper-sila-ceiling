@@ -117,7 +117,7 @@ silasim_list |>
   annotate("text", x = 0 + 0.67, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
            label = "AMYLOID POSITIVITY ONSET ",
            color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
-  labs(x = "**Years**<br>Relative to Amyloid Positivity Onset",
+  labs(x = "**Years**<br>Relative to Estimated Amyloid Positivity Onset",
        y = "**Centiloids**<br>SILA Estimate") +
   theme(strip.text.x = element_text(margin = margin(b = 3, t = 3)),
         strip.text.y = element_text(margin = margin(l = 3, r = 3)))
