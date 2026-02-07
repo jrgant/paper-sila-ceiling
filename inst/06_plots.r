@@ -147,7 +147,7 @@ plot_curves <- function(dataset, title, numsim = 6, numsubid = 100,
     ylim(c(-20, 200)) +
     xlim(c(-20, 40)) +
     labs(x = "Time (Ref. Amyloid Positivity)", y = "Centiloids (Measured)") +
-    theme(strip.text. = element_blank())
+    theme(strip.text.x = element_blank())
 
   FNAME <- file.path(OUTPUT_DIR, filename)
   ggsave(paste0(FNAME, ".pdf"), width = win, height = hin)
