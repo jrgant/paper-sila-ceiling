@@ -56,6 +56,10 @@ set_seed <- function() {
 ## SIMULATE EXPONENTIAL AMYLOID CURVE SCENARIOS ##
 ##########################################################################################
 
+exp_x0_calc <- function(k, apos) {
+  - (1 / k) * log(apos + 20)
+}
+
 ## Scenario 1: Homogeneous inter-individual rates
 
 s1_seed <- set_seed()
@@ -69,14 +73,19 @@ simexp_homo <- rbindlist(lapply(expRatesHomo, \(rate) {
       expr = e(
         offset = EXP_OFFSET,
         k = curr_k,
-        x0 = - (1 / k) * log(apos_threshold + 20)
+        x0 = exp_x0_calc(k = k, apos = apos_threshold)
       ),
       env = list(curr_k = rate)
     )
   )
 }), idcol = "sim")
 attr(simexp_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s1_seed)
-
+attr(simexp_homo, "params") <- data.table(
+  sim    = seq_len(NSIM),
+  k      = expRatesHomo,
+  x0     = exp_x0_calc(expRatesHomo, apos = APOS_THRESHOLD),
+  offset = EXP_OFFSET
+)
 
 ## Scenario 2: Heterogeneous inter-individual rates
 
@@ -100,11 +109,21 @@ simexp_hetero <- rbindlist(lapply(expRatesHetero, \(rate_mean) {
   )
 }), idcol = "sim")
 attr(simexp_hetero, "rng_info") <- list(rng_kind = RNGkind(), seed = s2_seed)
+attr(simexp_hetero, "params") <- data.table(
+  sim    = seq_len(NSIM),
+  k      = expRatesHetero,
+  x0     = exp_x0_calc(expRatesHetero, apo = APOS_THRESHOLD),
+  offset = EXP_OFFSET
+)
 
 
 ##########################################################################################
 ## SIMULATE LOGISTIC AMYLOID CURVE SCENARIOS ##
 ##########################################################################################
+
+log_x0_calc <- function(L, k, apos) {
+  log((L / apos) - 1) / k
+}
 
 ## Scenario 3: Homogeneous inter-individual rates and maxima
 
@@ -119,18 +138,23 @@ simlog_homo <- rbindlist(lapply(seq_len(NSIM), \(i) {
   genfun = gen_logistic,
   args = e(x = xvalue, L = L, k = k, x0 = x0),
   static_vars = substitute(
-    expr = e(L = fmax, k = frate, x0 = log((L / apos_threshold) - 1) / k),
+    expr = e(L = fmax, k = frate, x0 = log_x0_calc(L, k, apos_threshold)),
     env = list(fmax = curr_fmax, frate = curr_rate)
   )
 )}), idcol = "sim")
 attr(simlog_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s3_seed)
-
+attr(simlog_homo, "params") <- data.table(
+  sim = seq_len(NSIM),
+  L   = logFunMaxesHomo,
+  k   = logRatesHomo,
+  x0  = log_x0_calc(L = logFunMaxesHomo, k = logRatesHomo, apos = APOS_THRESHOLD)
+)
 
 ## Scenario 4: Heterogeneous inter-individual rates and maxima
 
 s4_seed <- set_seed()
 logFunMaxesHetero <- runif(NSIM, min = LOG_FMAX_MU_MIN, max = LOG_FMAX_MU_MAX)
-logRatesHetero <- runif(NSIM, min = LOG_RATE_MU_MIN, max = LOG_RATE_MU_MIN)
+logRatesHetero <- runif(NSIM, min = LOG_RATE_MU_MIN, max = LOG_RATE_MU_MAX)
 
 simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
   curr_fmax_mean <- logFunMaxesHetero[i]
@@ -149,6 +173,12 @@ simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
   )
 }), idcol = "sim")
 attr(simlog_hetero, "rng_info") <- list(rng_kind = RNGkind(), seed = s4_seed)
+attr(simlog_hetero, "params") <- data.table(
+  sim = seq_len(NSIM),
+  L   = logFunMaxesHetero,
+  k   = logRatesHetero,
+  x0  = log_x0_calc(L = logFunMaxesHetero, k = logRatesHetero, apos = APOS_THRESHOLD)
+)
 
 
 ##########################################################################################
