@@ -2,11 +2,13 @@
 ## SETUP ##
 ##########################################################################################
 
+pkgload::load_all()
 library(data.table)
 library(qs2)
 library(ggplot2)
 library(ggthemes)
 library(ggtext)
+library(ggh4x)
 
 source(here::here("inst", "00_constants.r"))
 
@@ -169,3 +171,79 @@ plot_curves(dataset = sims$simlog_homo,
 set.seed(49418884)
 plot_curves(dataset = sims$simlog_hetero,
             filename = "suppfig4", win = 6.5, hin = 6.5 / 1.35)
+
+
+##########################################################################################
+## SUPPLEMENTAL FIGURE 5: "TRUE" SIMULATED POPULATION AVERAGES ##
+##########################################################################################
+
+# Laws
+laws <- rbindlist(
+  lapply(setNames(nm = names(sims)), \(x) attr(sims[[x]], "params")),
+  idcol = "scenario",
+  fill = TRUE
+)
+
+laws[, scenario := fcase(scenario == "simexp_homo",   "exphom",
+                         scenario == "simexp_hetero", "exphet",
+                         scenario == "simlog_homo",   "loghom",
+                         scenario == "simlog_hetero", "loghet")]
+
+# Times at which SILA made predictions
+# We are using SILA's estimated time of amyloid positivity onset here and so are
+# accounting for error in the shape of the curve only
+siladat <- silasim_list[, .(estdtt0 = estdtt0, estval = estval),
+                        keyby = .(scenario, sim)]
+
+# Merge aggregation laws with SILA estimates (keep only the -20:40 time window)
+predmatch <- merge(siladat,
+                   laws,
+                   by = c("scenario", "sim"))[estdtt0 %between% c(-20, 40)]
+predmatch[, true_cl := fcase(
+  scenario %like% "exp", gen_exponential(estdtt0, k, x0, offset),
+  scenario %like% "log", gen_logistic(estdtt0, L, k, x0)
+)]
+
+# Calculate squared error between SILA prediction (estval) and "true" centiloids
+predmatch[, sqerr := (estval - true_cl)^2]
+msedat <- predmatch[, .(rmse = sqrt(mean(sqerr))), keyby = .(scenario, sim)]
+
+# 5 worst fits by MSE for each scenario
+mse5 <- msedat[order(scenario, -rmse),
+               .(sim = sim[1:5],
+                 rmse = rmse[1:5]),
+               keyby = scenario]
+mse5[, sim_ordered := 1:5, by = scenario] # group ID for plot
+
+mse5_select <- predmatch[mse5, on = .(scenario, sim)]
+
+mse5_select[, `:=`(
+  shape = factor(
+    fifelse(scenario %like% "^exp", "Exponential", "Logistic"),
+    levels = c("Exponential", "Logistic")
+  ),
+  variat  = factor(
+    fifelse(scenario %like% "hom$", "Homogeneous", "Heterogeneous"),
+    levels = c("Homogeneous", "Heterogeneous")
+  )
+)]
+
+mse5_select |>
+  ggplot(aes(estdtt0, color = scenario, group = sim)) +
+  geom_line(aes(y = estval, linetype = "SILA")) +
+  geom_line(aes(y = true_cl, linetype = "Truth")) +
+  geom_text(aes(x = Inf, y = -Inf,
+                label = paste("RMSE:", format(rmse, digits = 2, nsmall = 2))),
+            vjust = -0.5, hjust = 1.05, size = 2.5) +
+  ggh4x::facet_nested(vars(sim_ordered), vars(shape, variat)) +
+  scale_color_viridis_d(option = "magma", end = 0.8) +
+  scale_linetype_manual("Amyloid", values = c("solid", "longdash")) +
+  labs(x = "**Years**<br>Relative to Estimated Amyloid Positivity Onset",
+       y = "**Centiloids**") +
+  guides(color = "none") +
+  theme(legend.key.width = unit(0.49, "in"),
+        legend.position = "top",
+        legend.title = element_blank())
+
+ggsave(file.path(OUTPUT_DIR, "suppfig5.pdf"), width = 6.5, height = 7.5)
+ggsave(file.path(OUTPUT_DIR, "suppfig5.png"), width = 6.5, height = 7.5, dpi = 600)
