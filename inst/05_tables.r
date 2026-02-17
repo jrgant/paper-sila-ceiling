@@ -32,7 +32,7 @@ firstscan[, days_since_bl := yrs_since_bl * 365.25]
 ## SUMMARIES ##
 ##########################################################################################
 
-catvars  <- c("dx_bl_clean", "dx_scan_clean")
+catvars  <- c("ptgender", "dx_bl_clean", "dx_scan_clean")
 contvars <- c("days_since_bl", "age")
 
 tsum <- firstscan[, .SD, .SDcols = c(contvars, catvars, "multi")] |>
@@ -42,6 +42,7 @@ class(tsum) <- c("data.table", class(tsum))
 
 varLabels <- c("age"           = "Age at first scan",
                "days_since_bl" = "Days since baseline exam",
+               "ptgender"      = "Sex",
                "dx_bl_clean"   = "Cognitive diagnosis at baseline exam",
                "dx_scan_clean" = "Cognitive diagnosis at first scan")
 
@@ -51,14 +52,14 @@ set_flextable_defaults(font.family = "Arial", padding = 3)
 table1 <- tsum |>
   as_flextable(spread_first_col = TRUE) |>
   delete_columns(j = c(2, 4, 6)) |>
-  merge_h(i = c(1, 5, 9, 14)) |>
-  bold(i = c(1, 5, 9, 14)) |>
+  merge_h(i = c(1, 5, 9, 12, 17)) |>
+  bold(i = c(1, 5, 9, 12, 17)) |>
   footnote(j = 2, part = "header",
            ref_symbols = "a ",
            value = as_paragraph(
              "Empirical sample used to fit the SILA (sampled iterative ",
-             "local approximation) algorithm. Subjects must have had age at first ",
-             "scan and at least two non-missing centiloid measurements available."
+             "local approximation) algorithm. Subjects must have had ",
+             "at least two non-missing centiloid measurements available."
            )) |>
   footnote(j = 4, part = "header",
            ref_symbols = "b ",
@@ -66,7 +67,7 @@ table1 <- tsum |>
              "Empirical sample used to estimate age distribution at first PET scan ",
              "and proportion of individuals with a given number of scans."
            )) |>
-  footnote(i = c(9, 14), j = 1,
+  footnote(i = c(12, 17), j = 1,
            ref_symbols = "c ",
            value = as_paragraph(
              "Cognitive diagnoses shown for context. As we did not use information ",
