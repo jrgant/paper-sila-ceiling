@@ -30,7 +30,7 @@ SILA_MAX_ITER  <- 1000
 OUTPUT_DIR <- here::here("output")
 
 # PRIVATE ADNI DIRECTORIES
-ADNI_DL_DATE <- "27Oct2025"
+ADNI_DL_DATE <- "13Feb2026"
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
 PRIVATE_OUTPUT_DIR <- file.path(ADNI_PATH, "sila-ceiling-analysis")
 

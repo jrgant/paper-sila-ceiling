@@ -42,14 +42,20 @@ berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))
 names(berk) <- tolower(names(berk))
 setkeyv(berk, c("rid", "scandate"))
 
+ptdemog <- fread(file.path(ADNI_PATH, qp("PTDEMOG")))[!is.na(VISDATE)]
+names(ptdemog) <- tolower(names(ptdemog))
+setkeyv(ptdemog, c("rid", "visdate"))
 
-adnimerge <- fread(file.path(ADNI_PATH, qp("ADNIMERGE")))
-names(adnimerge) <- tolower(names(adnimerge))
-setkeyv(adnimerge, c("rid", "examdate"))
+dxsum <- fread(file.path(ADNI_PATH, qp("DXSUM")))[!is.na(EXAMDATE)]
+names(dxsum) <- tolower(names(dxsum))
+setkeyv(dxsum, c("rid", "examdate"))
 
 ## subset to columns needed for estimation
 berk <- berk[, .(rid, scandate, centiloids)]
-adnimerge <- adnimerge[, .(rid, examdate, age, ptgender, dx, apoe4)]
+ptdemog <- ptdemog[, .(rid, visdate, ptgender,
+                       ptdob = as.IDate(paste0(ptdob, "/01"), format = "%m/%Y/%d"))]
+# with this column subset, need to drop duplicate rows
+dxsum <- unique(dxsum[, .(rid, examdate, diagnosis)]) 
 
 
 ##########################################################################################
@@ -106,40 +112,36 @@ scan_lag_days <- berk_multi_scan[, density(days_since_last_scan, bw = "SJ")]
 ## CREATE EMPIRICAL ANALYSIS SAMPLE ##
 ##########################################################################################
 
-berkadni <- merge(berk,
-                  adnimerge[, .(
-                    age_bl = first(age),
-                    examdate_bl = first(examdate),
-                    ptgender = first(ptgender),
-                    apoe4 = first(apoe4),
-                    dx_bl =  first(dx)
-                  ), keyby = rid],
-                  by = "rid",
-                  all.x = TRUE)
-setkeyv(berkadni, c("rid", "scandate"))
+
+# Get first rows from diagnosis and demographic information and merge into the scan data
+berkadni <- dxsum[, .SD[1], keyby = rid
+                 ][ptdemog[, .SD[1], keyby = rid], on = .(rid)
+                 ][berk, on = .(rid)]
+setnames(berkadni,
+         c("visdate", "examdate", "diagnosis"),
+         c("visdate_bl", "examdate_bl", "dx_bl"))
+
+berkadni[, `:=`(age_visdate_bl = (visdate_bl - ptdob) / 365.25,
+                age_examdate_bl = (examdate_bl - ptdob) / 365.25,
+                age_at_scan = (scandate - ptdob) / 365.25)]
 
 NROW_BERKADNI_INIT       <- berkadni[, .N]
 NRID_BERKADNI_INIT       <- berkadni[, uniqueN(rid)]
-NROW_MISS_AGE            <- berkadni[is.na(age_bl), .N]
-NRID_MISS_AGE            <- berkadni[is.na(age_bl), uniqueN(rid)]
-NROW_BERKADNI_NOMISS_AGE <- berkadni[!is.na(age_bl), .N]
-NRID_BERKADNI_NOMISS_AGE <- berkadni[!is.na(age_bl), uniqueN(rid)]
-NRID_MISS_CL             <- berkadni[is.na(centiloids), uniqueN(rid)]
 NSCAN_MISS_CL            <- berkadni[is.na(centiloids), .N]
 NRID_MISS_CL             <- berkadni[is.na(centiloids), uniqueN(rid)]
 
-RID_DROP <- berkadni[!is.na(age_bl) & !is.na(centiloids), .(
+RID_DROP <- berkadni[!is.na(centiloids), .(
   first_nomiss_cent = min(scan_num),
   last_nomiss_cent = max(scan_num)
 ), rid][first_nomiss_cent > 1 & first_nomiss_cent == last_nomiss_cent][, rid]
 NRID_MISS_ONESCAN_NOMISS_CL <- length(RID_DROP)
 
-
-## TODO: 2026-02-04: add additional numbers above to droptable
 droptable <- data.table(
-  reason  = c("miss_baseline_age", "miss_centiloids", "miss_centiloids"),
-  rowtype = c("subid", "subid", "scan"),
-  value   = c(NRID_MISS_AGE, NRID_MISS_CL, NSCAN_MISS_CL)
+  reason  = c("missing centiloids",
+              "missing centiloids",
+              "missing centiloids + single subsequent non-missing centiloids"),
+  rowtype = c("subid", "scan", "subid"),
+  value   = c(NRID_MISS_CL, NSCAN_MISS_CL, NRID_MISS_ONESCAN_NOMISS_CL)
 )
 
 
@@ -147,8 +149,7 @@ droptable <- data.table(
 ## SIMULATION PARAMETER: AGE AT FIRST SCAN ##
 ################################################################################
 
-berkadni[, age_at_scan := age_bl + (scandate - examdate_bl) / 365.25]
-berkadni_first_scan <- berkadni[!is.na(age_bl), .SD[1], keyby = rid]
+berkadni_first_scan <- berkadni[, .SD[1], keyby = rid]
 
 ## inspect symmetry of age distribution
 berkadni_first_scan[, hist(age_at_scan)]
@@ -179,30 +180,36 @@ usethis::use_data(
 ## ADD VARIABLES to EMPIRICAL DATASET ##
 ##########################################################################################
 
-berkadni[, yrs_since_bl := (scandate - examdate_bl) / 365.25]
-berkadni[, age := age_bl + yrs_since_bl]
+# calculate years since first visit (vidate_bl from ptdemog)
+berkadni[, yrs_since_bl := (scandate - visdate_bl) / 365.25]
 
+# rename age_at_scan
+setnames(berkadni, "age_at_scan", "age")
+
+# specify the dates to use to match berkadni with the diagnosis data
 berkadni[, joindate := scandate]
-adnimerge[, joindate := examdate]
+dxsum[, joindate := examdate]
 
 # retrieve most recent cognitive diagnosis relative to scandate
 # dx_scan = diagnosis as of scandate
-berkadni <- adnimerge[, .(rid, joindate, dx_scan = dx, dx_date = examdate)
-                      ][berkadni, on = .(rid, joindate), roll = TRUE]
+berkadni <- dxsum[, .(rid, joindate, dx_scan = diagnosis, dx_date = examdate)
+                  ][berkadni, on = .(rid, joindate), roll = TRUE]
 
-# clean dx variables
-berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == "Dementia", "Dementia",
-                                    dx_bl == "CN", "CN",
-                                    dx_bl == "MCI", "MCI",
+# clean variables
+berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == 1, "CN",
+                                    dx_bl == 2, "MCI",
+                                    dx_bl == 3, "Dementia",
                                     default = NA_character_),
-                dx_scan_clean = fcase(dx_scan == "Dementia", "Dementia",
-                                      dx_scan == "CN", "CN",
-                                      dx_scan == "MCI", "MCI",
-                                      default = NA_character_))]
+                dx_scan_clean = fcase(dx_scan == 1, "CN",
+                                      dx_scan == 2, "MCI",
+                                      dx_scan == 3, "Dementia",
+                                      default = NA_character_),
+                ptgender = fcase(ptgender == 1, "Male",
+                                 ptgender == 2, "Female"))]
 
-berkadni[, .N, .(dx_bl, dx_bl_clean)]
-berkadni[, .N, .(dx_scan, dx_scan_clean)]
-berkadni[, .N, .(dx_bl_clean, dx_scan_clean)]
+berkadni[, .N, keyby = .(dx_bl, dx_bl_clean)]
+berkadni[, .N, keyby = .(dx_scan, dx_scan_clean)]
+berkadni[, .N, keyby = .(dx_bl_clean, dx_scan_clean)]
 
 
 ##########################################################################################

@@ -18,9 +18,8 @@ setkeyv(berkadni, c("rid", "scandate"))
 # centiloid measurements
 lu_subid_all_multiscan <- berkadni[, .(
   num_scans = .N,
-  miss_age = is.na(age_at_scan[1]),
   two_cl = sum(!is.na(centiloids)) > 1
-), by = rid][num_scans > 1 & miss_age == FALSE & two_cl == TRUE][, rid]
+), by = rid][num_scans > 1 & two_cl == TRUE][, rid]
 
 berksub <- berkadni[rid %in% lu_subid_all_multiscan]
 setnames(berksub, c("rid", "centiloids"), c("subid", "val"))

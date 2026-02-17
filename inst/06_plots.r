@@ -18,9 +18,8 @@ empsila <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley
 berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
 lu_subid_all_multiscan <- berkadni[, .(
   num_scans = .N,
-  miss_age = is.na(age_at_scan[1]),
   two_cl = sum(!is.na(centiloids)) > 1
-), by = rid][num_scans > 1 & miss_age == FALSE & two_cl == TRUE][, rid]
+), by = rid][num_scans > 1 & two_cl == TRUE][, rid]
 berkadni <- berkadni[rid %in% lu_subid_all_multiscan]
 setkeyv(berkadni, c("rid", "scandate"))
 

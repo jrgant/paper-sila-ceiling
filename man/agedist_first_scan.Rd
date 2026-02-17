@@ -17,13 +17,13 @@ agedist_first_scan
 }
 \description{
 A data.table containing two columns specifying the mean age at one's first
-PET scan, based on the ADNIMERGE and U.C. Berkeley scan datasets.
+PET scan, based on the PTDEMOG and U.C. Berkeley scan datasets.
 }
 \details{
 Sources:
 
 UC Berkeley - Amyloid PET 6mm Res analysis [ADNI1,GO,2,3,4]
-ADNIMERGE - Key ADNI tables merged into one table [ADNI1,GO,2,3]
+PTDEMOG - Subject Demographics [ADNI1,GO,2,3,4]
 
 \href{https://ida.loni.usc.edu/explore/jsp/search/search.jsp?project=ADNI#studyFiles}{https://ida.loni.usc.edu/explore/jsp/search/search.jsp?project=ADNI#studyFiles}
 }
