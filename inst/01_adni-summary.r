@@ -8,7 +8,7 @@ library(here)
 library(ggplot2)
 library(ggthemes)
 library(usethis, include.only = "use_data")
-library(collapse)
+library(collapse, include.only = c("descr", "GRP"))
 
 source(here::here("inst", "00_constants.r"))
 
