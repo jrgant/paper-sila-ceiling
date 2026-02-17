@@ -56,10 +56,6 @@ set_seed <- function() {
 ## SIMULATE EXPONENTIAL AMYLOID CURVE SCENARIOS ##
 ##########################################################################################
 
-exp_x0_calc <- function(k, apos) {
-  - (1 / k) * log(apos + 20)
-}
-
 ## Scenario 1: Homogeneous inter-individual rates
 
 s1_seed <- set_seed()
@@ -120,10 +116,6 @@ attr(simexp_hetero, "params") <- data.table(
 ##########################################################################################
 ## SIMULATE LOGISTIC AMYLOID CURVE SCENARIOS ##
 ##########################################################################################
-
-log_x0_calc <- function(L, k, apos) {
-  log((L / apos) - 1) / k
-}
 
 ## Scenario 3: Homogeneous inter-individual rates and maxima
 

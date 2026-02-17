@@ -38,3 +38,13 @@ PRIVATE_OUTPUT_DIR <- file.path(ADNI_PATH, "sila-ceiling-analysis")
 qp <- function(string) {
   paste0(string, "_", ADNI_DL_DATE, ".csv")
 }
+
+# Function: Helper to calculate center of exponential function
+exp_x0_calc <- function(k, apos) {
+  - (1 / k) * log(apos + 20)
+}
+
+# Function: Helper to calculate center of logistic function
+log_x0_calc <- function(L, k, apos) {
+  log((L / apos) - 1) / k
+}
