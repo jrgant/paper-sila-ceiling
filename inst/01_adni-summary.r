@@ -112,7 +112,6 @@ scan_lag_days <- berk_multi_scan[, density(days_since_last_scan, bw = "SJ")]
 ## CREATE EMPIRICAL ANALYSIS SAMPLE ##
 ##########################################################################################
 
-
 # Get first rows from diagnosis and demographic information and merge into the scan data
 berkadni <- dxsum[, .SD[1], keyby = rid
                  ][ptdemog[, .SD[1], keyby = rid], on = .(rid)
