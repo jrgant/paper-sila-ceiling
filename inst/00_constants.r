@@ -1,3 +1,5 @@
+load(here::here("data", "min_centiloids.rda"))
+
 # Control parameters
 NSIM <- 100
 NDAT <- 2000
@@ -8,13 +10,14 @@ APOS_THRESHOLD <- 20
 # Exponential parameters
 EXP_RATE_MU_MIN <- 0.01
 EXP_RATE_MU_MAX <- 0.07
-EXP_OFFSET      <- (-20)
+EXP_OFFSET      <- min_centiloids
 
 # Logistic parameters
 LOG_FMAX_MU_MIN <- 130
 LOG_FMAX_MU_MAX <- 165
 LOG_RATE_MU_MIN <- 0.2
 LOG_RATE_MU_MAX <- 0.8
+LOG_OFFSET <- min_centiloids
 
 # Common parameters
 SIGMA_HETERO_MULTIPLIER <- 0.1
@@ -41,7 +44,7 @@ qp <- function(string) {
 
 # Function: Helper to calculate center of exponential function
 exp_x0_calc <- function(k, apos) {
-  - (1 / k) * log(apos + 20)
+  - (1 / k) * log(apos)
 }
 
 # Function: Helper to calculate center of logistic function

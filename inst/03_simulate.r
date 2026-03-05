@@ -69,7 +69,7 @@ simexp_homo <- rbindlist(lapply(expRatesHomo, \(rate) {
       expr = e(
         offset = EXP_OFFSET,
         k = curr_k,
-        x0 = exp_x0_calc(k = k, apos = apos_threshold)
+        x0 = exp_x0_calc(k = k, apos = apos_threshold + abs(EXP_OFFSET))
       ),
       env = list(curr_k = rate)
     )
@@ -79,7 +79,7 @@ attr(simexp_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s1_seed)
 attr(simexp_homo, "params") <- data.table(
   sim    = seq_len(NSIM),
   k      = expRatesHomo,
-  x0     = exp_x0_calc(expRatesHomo, apos = APOS_THRESHOLD),
+  x0     = exp_x0_calc(expRatesHomo, apos = APOS_THRESHOLD + abs(EXP_OFFSET)),
   offset = EXP_OFFSET
 )
 
@@ -96,7 +96,7 @@ simexp_hetero <- rbindlist(lapply(expRatesHetero, \(rate_mean) {
       expr = e(
         offset = EXP_OFFSET,
         k = curr_k,
-        x0 = - (1 / k) * log(apos_threshold + 20)
+        x0 = exp_x0_calc(k = k, apos = apos_threshold + abs(EXP_OFFSET))
       ),
       env = list(
         curr_k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * SIGMA_HETERO_MULTIPLIER)
@@ -108,7 +108,7 @@ attr(simexp_hetero, "rng_info") <- list(rng_kind = RNGkind(), seed = s2_seed)
 attr(simexp_hetero, "params") <- data.table(
   sim    = seq_len(NSIM),
   k      = expRatesHetero,
-  x0     = exp_x0_calc(expRatesHetero, apo = APOS_THRESHOLD),
+  x0     = exp_x0_calc(expRatesHetero, apo = APOS_THRESHOLD + abs(EXP_OFFSET)),
   offset = EXP_OFFSET
 )
 
@@ -128,9 +128,14 @@ simlog_homo <- rbindlist(lapply(seq_len(NSIM), \(i) {
   curr_rate <- logRatesHomo[i]
   simquick(
   genfun = gen_logistic,
-  args = e(x = xvalue, L = L, k = k, x0 = x0),
+  args = e(x = xvalue, L = L, k = k, x0 = x0, offset = offset),
   static_vars = substitute(
-    expr = e(L = fmax, k = frate, x0 = log_x0_calc(L, k, apos_threshold)),
+    expr = e(
+      L = fmax,
+      k = frate,
+      x0 = log_x0_calc(L + abs(LOG_OFFSET), k, apos_threshold),
+      offset = LOG_OFFSET
+    ),
     env = list(fmax = curr_fmax, frate = curr_rate)
   )
 )}), idcol = "sim")
@@ -139,7 +144,8 @@ attr(simlog_homo, "params") <- data.table(
   sim = seq_len(NSIM),
   L   = logFunMaxesHomo,
   k   = logRatesHomo,
-  x0  = log_x0_calc(L = logFunMaxesHomo, k = logRatesHomo, apos = APOS_THRESHOLD)
+  x0  = log_x0_calc(L = logFunMaxesHomo, k = logRatesHomo, apos = APOS_THRESHOLD),
+  offset = LOG_OFFSET
 )
 
 ## Scenario 4: Heterogeneous inter-individual rates and maxima
@@ -153,12 +159,13 @@ simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
   curr_rate_mean <- logRatesHetero[i]
   simquick(
     genfun = gen_logistic,
-    args = e(x = xvalue, L = L, k = k, x0 = x0),
+    args = e(x = xvalue, L = L, k = k, x0 = x0, offset = offset),
     static_vars = substitute(
       expr = e(
         L = rnorm(NDAT, mean = fmax_mean, sd = fmax_mean * SIGMA_HETERO_MULTIPLIER),
         k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * SIGMA_HETERO_MULTIPLIER),
-        x0 = log((L / apos_threshold) - 1) / k
+        x0 = log(((L + abs(LOG_OFFSET)) / apos_threshold) - 1) / k,
+        offset = LOG_OFFSET
       ),
       env = list(fmax_mean = curr_fmax_mean, rate_mean = curr_rate_mean)
     )
@@ -167,9 +174,10 @@ simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
 attr(simlog_hetero, "rng_info") <- list(rng_kind = RNGkind(), seed = s4_seed)
 attr(simlog_hetero, "params") <- data.table(
   sim = seq_len(NSIM),
-  L   = logFunMaxesHetero,
+  L   = logFunMaxesHetero + abs(LOG_OFFSET),
   k   = logRatesHetero,
-  x0  = log_x0_calc(L = logFunMaxesHetero, k = logRatesHetero, apos = APOS_THRESHOLD)
+  x0  = log_x0_calc(L = logFunMaxesHetero, k = logRatesHetero, apos = APOS_THRESHOLD),
+  offset = LOG_OFFSET
 )
 
 
