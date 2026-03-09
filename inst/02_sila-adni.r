@@ -29,7 +29,10 @@ setnames(berksub, c("rid", "centiloids"), c("subid", "val"))
 set.seed(987312344)
 fit <- list()
 fit[["res"]] <- sila(berksub, dt = SILA_DT, val0 = SILA_VAL0, maxi = SILA_MAX_ITER)
-fit[["resfit"]] <- sila_estimate(fit$res$tsila, df = berksub, align_event = "last")
+fit[["resfit"]] <- sila_estimate(fit$res$tsila,
+                                 df = berkadni[!is.na(centiloids),
+                                               .(subid = rid, val = centiloids, age)],
+                                 align_event = "last")
 
 
 ##########################################################################################
