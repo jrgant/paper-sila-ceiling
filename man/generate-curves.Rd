@@ -5,7 +5,7 @@
 \alias{gen_exponential}
 \title{Curve-generating functions}
 \usage{
-gen_logistic(x, L, k = 1, x0 = 0)
+gen_logistic(x, L, k = 1, x0 = 0, offset = 0)
 
 gen_exponential(x, k, x0, offset)
 }
@@ -18,7 +18,9 @@ gen_exponential(x, k, x0, offset)
 
 \item{x0}{Midpoint of the logistic curve}
 
-\item{offset}{Vertical shift}
+\item{offset}{For the exponential function, the vertical shift. For the logistic
+function, must be <= 0 (the default); setting it allows the logistic function
+to elicit values < 0 while maintaining the desired maximum.}
 }
 \description{
 Curve-generating functions

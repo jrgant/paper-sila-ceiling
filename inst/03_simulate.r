@@ -9,17 +9,16 @@ library(MASS, include.only = "gamma.shape")
 
 source(here::here("inst", "00_constants.r"))
 empfit <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
+setDT(empfit$resfit)
 
 # Fit an intercept-only model for the distribution of age at amyloid positivity, as
 # estimated by the SILA fit in the empirical dataset.
 # Shape and rate parameter calculation based on gfit$family$simulate
-estaget0 <- as.data.table(
-  empfit$resfit
-)[, .(estaget0 = first(estaget0)), keyby = subid][, estaget0]
+estaget0 <- empfit$resfit[, .(estaget0 = first(estaget0)), keyby = subid][, estaget0]
 
 gfit <- glm(estaget0 ~ 1, family = Gamma(link = "identity"))
-AGE_APOS_SHAPE <- gamma.shape(gfit)$alpha # 25.31755
-AGE_APOS_RATE  <- unname(gamma.shape(gfit)$alpha / coef(gfit)[1]) # 0.3239963
+AGE_APOS_SHAPE <- gamma.shape(gfit)$alpha # 25.4112
+AGE_APOS_RATE  <- unname(gamma.shape(gfit)$alpha / coef(gfit)[1]) # 0.3245427
 
 # Print parameter settings and output directory
 cat("\n", rep("-", 40), "\n", "Parameter settings:\n", rep("-", 40), "\n", sep = "")
@@ -31,7 +30,6 @@ sapply(ls(pattern = "OUTPUT_DIR"), get)
 simquick <- function(...) {
   simulate_curves(
     N = NDAT,
-    centiloid_range = c(-20, Inf),
     scan_dist = num_scan_props,
     lag_dist = scan_lag_days,
     age_scan1 = agedist_first_scan,

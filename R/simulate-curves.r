@@ -1,8 +1,6 @@
 #' Simulate amyloid curves
 #'
 #' @param N Number of amyloid curves to simulate
-#' @param centiloid_range A numeric vector of length 2 specifiying the minimum
-#'   and maximum possible centiloid values.
 #' @param scan_dist A data.frame specifying the probability of a patient having
 #'   x PET scans.
 #' @param lag_dist An estimated probability density (output by `density()`)
@@ -30,7 +28,6 @@
 #' @import data.table
 #' @export simulate_curves
 simulate_curves <- function(N,
-                            centiloid_range = NULL,
                             scan_dist = num_scan_props,
                             lag_dist = scan_lag_days,
                             age_scan1 = agedist_first_scan,
@@ -41,12 +38,6 @@ simulate_curves <- function(N,
                             args = NULL,
                             static_vars = NULL,
                             epsilon = expression(rnorm(.N, sd = 4))) {
-
-  if (length(centiloid_range) != 2) {
-    stop("`centiloid_range` should be a vector of length 2 specifying ",
-         "the minimum and maximum possible values for the simulated ",
-         "centiloid measurements.")
-  }
 
   if (!is.function(genfun)) {
     stop("The argument to `genfun` must be a function.")

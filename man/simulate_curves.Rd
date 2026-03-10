@@ -6,7 +6,6 @@
 \usage{
 simulate_curves(
   N,
-  centiloid_range = NULL,
   scan_dist = num_scan_props,
   lag_dist = scan_lag_days,
   age_scan1 = agedist_first_scan,
@@ -21,9 +20,6 @@ simulate_curves(
 }
 \arguments{
 \item{N}{Number of amyloid curves to simulate}
-
-\item{centiloid_range}{A numeric vector of length 2 specifiying the minimum
-and maximum possible centiloid values.}
 
 \item{scan_dist}{A data.frame specifying the probability of a patient having
 x PET scans.}
