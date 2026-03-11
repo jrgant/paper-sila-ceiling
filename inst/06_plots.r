@@ -61,7 +61,8 @@ PINK <- "#FF1493"
 TEAL <- "#008080"
 
 suppressMessages(extrafont::loadfonts())
-theme_set(theme_pander(base_family = "Mona Sans",
+PLOT_FONT <- "Mona Sans" # If not installed, ggplot should default to an available font
+theme_set(theme_pander(base_family = PLOT_FONT,
                        base_size = 10,
                        boxes = TRUE,
                        nomargin = FALSE,
@@ -88,12 +89,14 @@ fig1a <- empsila$resfit |>
   geom_line(aes(y = val, group = subid), linewidth = 0.1, alpha = 0.1) +
   geom_point(aes(y = val), size = 0.5, alpha = 0.1) +
   geom_line(aes(y = estval), color = "deep pink") +
-  annotate("text", x = -Inf, y = 20 + 3, vjust = 0, hjust = -0.1,
-           label = " AMYLOID POSITIVITY THRESHOLD",
-           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
-  annotate("text", x = 0 + 0.6, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
-           label = "AMYLOID POSITIVITY ONSET ",
-           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+  annotate("text", x = -Inf, y = 20 + 6,
+           vjust = 0, hjust = 0,
+           label = " A+ THRESHOLD",
+           color = GUIDELINE_COLOR, size = 4) +
+  annotate("text", x = 0 + 1.2, y = Inf,
+           vjust = 1, hjust = 1, angle = 90,
+           label = "A+ ONSET ",
+           color = GUIDELINE_COLOR, size = 4) +
   scale_x_continuous(expand = c(0, 0), limits = c(-40, max(empsila$resfit$estdtt0))) +
   labs(x = "YEARS",
        y = "CENTILOIDS")
@@ -117,7 +120,7 @@ fig1b <- ggplot() +
             aes(x = x0 - 1, y = 50, color = bm, label = bm),
             size = 4, angle = 76) +
   annotate("text", x = -Inf, y = Inf, label = "Amyloid Cascade Model",
-           hjust = -0.05, vjust = 2, size = 3) +
+           hjust = -0.05, vjust = 2, size = 3.5) +
   labs(x = "DISEASE STAGE", y = "BIOMARKER VALUE") +
   scale_color_viridis_d("Biomarker", option = "magma", end = 0.7) +
   guides(color = "none") +
@@ -147,33 +150,33 @@ fig1c <- empsila$resfit[order(estdtt0), .(estdtt0, estval)] |>
   ggplot(aes(x = estdtt0, y = estval)) +
   # Empirical 95% centiloid quantile
   geom_hline(aes(yintercept = EMP_CL_95), color = "#7286a0") +
-  annotate("text", x = 60, y = EMP_CL_95 + 3,
+  annotate("text", x = 60, y = EMP_CL_95 + 6,
            hjust = 1, vjust = 0,
-           color = "#7286a0", size = 2.5,
+           color = "#7286a0", size = 3,
            label = "95% Qt ADNI",
-           family = "Mona Sans") +
+           family = PLOT_FONT) +
   # Farrar et al.
   annotate("rect", xmin = -Inf, xmax = Inf, ymin = 24, ymax = 40,
-           fill = GUIDELINE_COLOR) +
-  annotate("text", x = 60, y = 32,
+           fill = GUIDELINE_COLOR, alpha = 0.5) +
+  annotate("text", x = 60, y = 52,
            hjust = 1, vjust = 0.5,
-           color = "white", size = 2.5,
+           color = GUIDELINE_COLOR, size = 3,
            label = "Therapy Initiation",
-           family = "Mona Sans") +
+           family = PLOT_FONT) +
   # Klunk et al.
   geom_hline(aes(yintercept = 100), color = GUIDELINE_COLOR) +
-  annotate("text", x = 60, y = 97,
+  annotate("text", x = 60, y = 94,
            hjust = 1, vjust = 1,
-           color = GUIDELINE_COLOR, size = 2.5,
+           color = GUIDELINE_COLOR, size = 3,
            label = "\"Typical\" AD Patient",
-           family = "Mona Sans") +
+           family = PLOT_FONT) +
   # Salvado et al.
   geom_hline(aes(yintercept = 12), color = GUIDELINE_COLOR) +
-  annotate("text", x = 60, y = 9,
+  annotate("text", x = 60, y = 6,
            hjust = 1, vjust = 1,
-           color = GUIDELINE_COLOR, size = 2.5,
+           color = GUIDELINE_COLOR, size = 3,
            label = "Emerging Pathology",
-           family = "Mona Sans") +
+           family = PLOT_FONT) +
   # Amyloid positivity threshold
   geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR,
              linetype = "longdash", alpha = 0.3) +
