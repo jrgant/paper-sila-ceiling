@@ -35,7 +35,7 @@ fit_sila <- function(fmt_data, parallel = TRUE) {
   }
   fits <- foreach(i = unique(fmt_data$sim),
                   .options.future = list(packages = c("data.table", "silaR"),
-                                         seed = TRUE)) %dofuture% {
+                                         seed = 19220038)) %dofuture% {
     tmp <- fmt_data[sim == i]
     currfit <- list()
     currfit[["res"]] <- sila(tmp, dt = SILA_DT, val0 = SILA_VAL0, maxi = SILA_MAX_ITER)
