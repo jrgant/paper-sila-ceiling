@@ -10,6 +10,7 @@ source(here::here("inst", "00_constants.r"))
 berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
 setkeyv(berkadni, c("rid", "scandate"))
 
+
 ##########################################################################################
 ## RUN SILA ##
 ##########################################################################################

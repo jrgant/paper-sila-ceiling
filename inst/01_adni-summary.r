@@ -38,11 +38,11 @@ theme_set(
 ## NOTE: The call to unique() when reading in the Berkeley data drops 6
 ##       rows that appear to be duplicates.
 ADNI_PATH <- Sys.getenv("ADNI_PATH")
-berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))
+berk <- unique(fread(file.path(ADNI_PATH, qp("UCBERKELEY_AMY_6MM"))))[SITEID != 381]
 names(berk) <- tolower(names(berk))
 setkeyv(berk, c("rid", "scandate"))
 
-ptdemog <- fread(file.path(ADNI_PATH, qp("PTDEMOG")))[!is.na(VISDATE)]
+ptdemog <- fread(file.path(ADNI_PATH, qp("PTDEMOG")))[!is.na(VISDATE) & SITEID != 381]
 names(ptdemog) <- tolower(names(ptdemog))
 setkeyv(ptdemog, c("rid", "visdate"))
 
