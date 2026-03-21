@@ -55,7 +55,6 @@ set_seed <- function() {
 ##########################################################################################
 
 ## Scenario 1: Homogeneous inter-individual rates
-
 s1_seed <- set_seed()
 expRatesHomo <- runif(NSIM, min = EXP_RATE_MU_MIN, max = EXP_RATE_MU_MAX)
 
@@ -82,7 +81,6 @@ attr(simexp_homo, "params") <- data.table(
 )
 
 ## Scenario 2: Heterogeneous inter-individual rates
-
 s2_seed <- set_seed()
 expRatesHetero <- runif(NSIM, min = EXP_RATE_MU_MIN, max = EXP_RATE_MU_MAX)
 
@@ -116,7 +114,6 @@ attr(simexp_hetero, "params") <- data.table(
 ##########################################################################################
 
 ## Scenario 3: Homogeneous inter-individual rates and maxima
-
 s3_seed <- set_seed()
 logFunMaxesHomo <- runif(NSIM, min = LOG_FMAX_MU_MIN, max = LOG_FMAX_MU_MAX)
 logRatesHomo <- runif(NSIM, min = LOG_RATE_MU_MIN, max = LOG_RATE_MU_MAX)
@@ -147,7 +144,6 @@ attr(simlog_homo, "params") <- data.table(
 )
 
 ## Scenario 4: Heterogeneous inter-individual rates and maxima
-
 s4_seed <- set_seed()
 logFunMaxesHetero <- runif(NSIM, min = LOG_FMAX_MU_MIN, max = LOG_FMAX_MU_MAX)
 logRatesHetero <- runif(NSIM, min = LOG_RATE_MU_MIN, max = LOG_RATE_MU_MAX)
@@ -180,8 +176,64 @@ attr(simlog_hetero, "params") <- data.table(
 
 
 ##########################################################################################
+## SIMULATE LINEAR AMYLOID CURVE SCENARIOS ##
+##########################################################################################
+
+## Scenario 5: Homoegeneous inter-individual slopes
+s5_seed <- set_seed()
+linSlopesHomo <- runif(NSIM, min = LIN_SLOPE_MU_MIN, max = LIN_SLOPE_MU_MAX)
+
+simlin_homo <- rbindlist(lapply(linSlopesHomo, \(slope) {
+  tmp <- simquick(
+    genfun = gen_linear,
+    args = e(x = xvalue, k = k, b = b),
+    static_vars = substitute(
+      expr = e(
+        k = curr_k,
+        b = APOS_THRESHOLD
+      ),
+      env = list(curr_k = slope)
+    )
+  )
+  tmp[centiloids >= min_centiloids]
+}), idcol = "sim")
+attr(simlin_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s5_seed)
+attr(simlin_homo, "params") <- data.table(
+  sim = seq_len(NSIM),
+  k   = linSlopesHomo,
+  b   = APOS_THRESHOLD # y-intercept
+)
+
+## Scenario 6: Heterogeneous inter-individual slopes
+s6_seed <- set_seed()
+linSlopesHetero <- runif(NSIM, min = LIN_SLOPE_MU_MIN, max = LIN_SLOPE_MU_MAX)
+
+simlin_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
+  curr_slope_mean <- linSlopesHetero[i]
+  simquick(
+    genfun = gen_linear,
+    args = e(x = xvalue, k = k, b = b),
+    static_vars = substitute(
+      expr = e(
+        k = rnorm(NDAT, mean = slope_mean, sd = slope_mean * SIGMA_HETERO_MULTIPLIER),
+        b = APOS_THRESHOLD
+      ),
+      env = list(slope_mean = curr_slope_mean)
+    )
+  )
+}), idcol = "sim")
+attr(simlin_hetero, "rng_info") <- list(rng_kind = RNGkind(), seed = s6_seed)
+attr(simlin_hetero, "params") <- data.table(
+  sim = seq_len(NSIM),
+  k   = logRatesHetero,
+  b   = APOS_THRESHOLD # y-intercept
+)
+
+
+
+##########################################################################################
 ## WRITE SIMULATED DATASETS ##
 ##########################################################################################
 
-simlist <- lapply(setNames(nm = ls(pattern = "simexp|simlog")), get)
+simlist <- lapply(setNames(nm = ls(pattern = "simexp|simlog|simlin")), get)
 qs_save(simlist, file = file.path(OUTPUT_DIR, "simulated-datasets.qs2"))

@@ -19,6 +19,10 @@ LOG_RATE_MU_MIN <- 0.2
 LOG_RATE_MU_MAX <- 0.8
 LOG_OFFSET <- min_centiloids
 
+# Linear parameters
+LIN_SLOPE_MU_MIN <- 0
+LIN_SLOPE_MU_MAX <- 6
+
 # Common parameters
 SIGMA_HETERO_MULTIPLIER <- 0.1
 NOISE_MU <- 0

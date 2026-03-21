@@ -36,13 +36,16 @@ silasim_list <- rbindlist(list(
   exphom = rbindlist(lapply(simsila$simexp_homo,   \(.x) .x$resfit)),
   exphet = rbindlist(lapply(simsila$simexp_hetero, \(.x) .x$resfit)),
   loghom = rbindlist(lapply(simsila$simlog_homo,   \(.x) .x$resfit)),
-  loghet = rbindlist(lapply(simsila$simlog_hetero, \(.x) .x$resfit))
+  loghet = rbindlist(lapply(simsila$simlog_hetero, \(.x) .x$resfit)),
+  linhom = rbindlist(lapply(simsila$simlin_homo,   \(.x) .x$resfit)),
+  linhet = rbindlist(lapply(simsila$simlin_hetero, \(.x) .x$resfit))
 ), idcol = "scenario")
 
 silasim_list[, `:=`(
   genfun = fcase(
     scenario %like% "^exp", "Exponential",
-    scenario %like% "^log", "Logistic"
+    scenario %like% "^log", "Logistic",
+    scenario %like% "^lin", "Linear"
   ),
   variat = fcase(
     scenario %like% "hom$", "Homogeneous",
@@ -217,42 +220,50 @@ fig1c <- empsila$resfit[order(estdtt0), .(estdtt0, estval)] |>
 
 fig1a + fig1b + fig1c + plot_annotation(tag_levels = "A")
 
-ggsave(file.path(OUTPUT_DIR, "figure1.pdf"), width = 8.5, height = 3, scale = 1.3)
+ggsave(file.path(OUTPUT_DIR, "figure1.pdf"), width = 8.5, height = 3, scale = 1.3,
+       dev = cairo_pdf)
 ggsave(file.path(OUTPUT_DIR, "figure1.png"), width = 8.5, height = 3, scale = 1.3,
        dpi = 600)
 
 
 ##########################################################################################
-## FIGURE 2: SILA FITS to SIMULATED DATA ##
+## FIGURE 2 and SUPPLEMENTARY FIGURE 6: SILA FITS to SIMULATED DATA ##
 ##########################################################################################
 
-silasim_list |>
-  ggplot(aes(estdtt0, estval)) +
-  geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR, linetype = "longdash") +
-  geom_hline(aes(yintercept = APOS_THRESHOLD),
-             color = GUIDELINE_COLOR, linetype = "longdash") +
-  geom_line(aes(group = sim), alpha = 0.2) +
-  facet_grid(vars(genfun), vars(variat),
-             labeller = labeller(genfun = toupper, variat = toupper)) +
-  ylim(c(-40, 250)) +
-  xlim(c(-20, 40)) +
-  annotate("text", x = Inf, y = 20 - 3, vjust = 1, hjust = 1.1,
-           label = " AMYLOID POSITIVITY THRESHOLD",
-           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
-  annotate("text", x = 0 + 0.67, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
-           label = "AMYLOID POSITIVITY ONSET ",
-           color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
-  labs(x = "YEARS",
-       y = "CENTILOIDS (SILA ESTIMATE)") +
-  theme(strip.text.x = element_text(margin = margin(b = 3, t = 3)),
-        strip.text.y = element_text(margin = margin(l = 3, r = 3)))
+plot_sila_fits <- function(data) {
+  data |>
+    ggplot(aes(estdtt0, estval)) +
+    geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR, linetype = "longdash") +
+    geom_hline(aes(yintercept = APOS_THRESHOLD),
+               color = GUIDELINE_COLOR, linetype = "longdash") +
+    geom_line(aes(group = sim), alpha = 0.2) +
+    facet_grid(vars(genfun), vars(variat),
+               labeller = labeller(genfun = toupper, variat = toupper)) +
+    ylim(c(-40, 250)) +
+    xlim(c(-20, 40)) +
+    annotate("text", x = Inf, y = 20 - 3, vjust = 1, hjust = 1.1,
+             label = " AMYLOID POSITIVITY THRESHOLD",
+             color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+    annotate("text", x = 0 + 0.67, y = Inf, vjust = 1, hjust = 1.1, angle = 90,
+             label = "AMYLOID POSITIVITY ONSET ",
+             color = GUIDELINE_COLOR, size = 2, fontface = "bold") +
+    labs(x = "YEARS",
+         y = "CENTILOIDS (SILA ESTIMATE)") +
+    theme(strip.text.x = element_text(margin = margin(b = 3, t = 3)),
+          strip.text.y = element_text(margin = margin(l = 3, r = 3)))
+}
 
-ggsave(file.path(OUTPUT_DIR, "figure2.pdf"), width = 6.5, height = 6.5)
+plot_sila_fits(data = silasim_list[genfun %in% c("Exponential", "Logistic")])
+ggsave(file.path(OUTPUT_DIR, "figure2.pdf"), width = 6.5, height = 6.5, dev = cairo_pdf)
 ggsave(file.path(OUTPUT_DIR, "figure2.png"), width = 6.5, height = 6.5, dpi = 600)
 
+plot_sila_fits(data = silasim_list[genfun == "Linear"])
+ggsave(file.path(OUTPUT_DIR, "suppfig6.pdf"), width = 6.5, height = 3.25, dev = cairo_pdf)
+ggsave(file.path(OUTPUT_DIR, "suppfig6.png"), width = 6.5, height = 3.25, dpi = 600)
+
 
 ##########################################################################################
-## FIGURE 3: "TRUE" SIMULATED POPULATION AVERAGES ##
+## FIGURE 3 and SUPPLEMENTAL FIGURE 7: "TRUE" SIMULATED POPULATION AVERAGES ##
 ##########################################################################################
 
 # Laws
@@ -265,7 +276,9 @@ laws <- rbindlist(
 laws[, scenario := fcase(scenario == "simexp_homo",   "exphom",
                          scenario == "simexp_hetero", "exphet",
                          scenario == "simlog_homo",   "loghom",
-                         scenario == "simlog_hetero", "loghet")]
+                         scenario == "simlog_hetero", "loghet",
+                         scenario == "simlin_homo",   "linhom",
+                         scenario == "simlin_hetero", "linhet")]
 
 # Times at which SILA made predictions
 # We are using SILA's estimated time of amyloid positivity onset here and so are
@@ -277,10 +290,9 @@ siladat <- silasim_list[, .(estdtt0 = estdtt0, estval = estval),
 predmatch <- merge(siladat,
                    laws,
                    by = c("scenario", "sim"))[estdtt0 %between% c(-20, 40)]
-predmatch[, true_cl := fcase(
-  scenario %like% "exp", gen_exponential(estdtt0, k, x0, offset),
-  scenario %like% "log", gen_logistic(estdtt0, L, k, x0, offset)
-)]
+predmatch[scenario %like% "exp", true_cl := gen_exponential(estdtt0, k, x0, offset)]
+predmatch[scenario %like% "log", true_cl := gen_logistic(estdtt0, L, k, x0, offset)]
+predmatch[scenario %like% "lin", true_cl := gen_linear(estdtt0, k, b)]
 
 # Calculate squared error between SILA prediction (estval) and "true" centiloids
 predmatch[, sqerr := (estval - true_cl)^2]
@@ -297,8 +309,10 @@ mse5_select <- predmatch[mse5, on = .(scenario, sim)]
 
 mse5_select[, `:=`(
   shape = factor(
-    fifelse(scenario %like% "^exp", "Exponential", "Logistic"),
-    levels = c("Exponential", "Logistic")
+    fcase(scenario %like% "^exp", "Exponential",
+          scenario %like% "^log", "Logistic",
+          scenario %like% "^lin", "Linear"),
+    levels = c("Exponential", "Logistic", "Linear")
   ),
   variat  = factor(
     fifelse(scenario %like% "hom$", "Homogeneous", "Heterogeneous"),
@@ -306,31 +320,42 @@ mse5_select[, `:=`(
   )
 )]
 
-mse5_select |>
-  ggplot(aes(estdtt0, color = scenario, group = sim)) +
-  geom_line(aes(y = estval, linetype = "SILA")) +
-  geom_line(aes(y = true_cl, linetype = "Truth")) +
-  geom_text(aes(x = Inf, y = -Inf,
-                label = paste("RMSE:", format(rmse, digits = 2, nsmall = 2))),
-            vjust = -0.5, hjust = 1.05, size = 2.5) +
-  ggh4x::facet_nested(vars(sim_ordered), vars(shape, variat)) +
-  scale_color_viridis_d(option = "magma", end = 0.8) +
-  scale_linetype_manual("Amyloid", values = c("solid", "longdash")) +
-  labs(x = "YEARS", y = "CENTILOIDS") +
-  guides(color = "none") +
-  theme(legend.key.width = unit(0.49, "in"),
-        legend.position = "none",
-        legend.title = element_blank(),
-        axis.title.x = element_markdown(margin = margin(t = 10)),
-        axis.title.y = element_markdown(margin = margin(r = 10)))
 
-ggsave(file.path(OUTPUT_DIR, "figure3.pdf"), width = 4.5, height = 7.5, scale = 1.3)
+plot_bad_fits <- function(data) {
+  data |>
+    ggplot(aes(estdtt0, color = scenario, group = sim)) +
+    geom_line(aes(y = estval, linetype = "SILA")) +
+    geom_line(aes(y = true_cl, linetype = "Truth")) +
+    geom_text(aes(x = Inf, y = -Inf,
+                  label = paste("RMSE:", format(rmse, digits = 2, nsmall = 2))),
+              vjust = -0.5, hjust = 1.05, size = 2.5) +
+    ggh4x::facet_nested(vars(sim_ordered), vars(shape, variat)) +
+    scale_color_viridis_d(option = "magma", end = 0.8) +
+    scale_linetype_manual("Amyloid", values = c("solid", "longdash")) +
+    labs(x = "YEARS", y = "CENTILOIDS") +
+    guides(color = "none") +
+    theme(legend.key.width = unit(0.49, "in"),
+          legend.position = "none",
+          legend.title = element_blank(),
+          axis.title.x = element_markdown(margin = margin(t = 10)),
+          axis.title.y = element_markdown(margin = margin(r = 10)))  
+}
+
+plot_bad_fits(data = mse5_select[scenario %like% "^(exp|log)"])
+ggsave(file.path(OUTPUT_DIR, "figure3.pdf"), width = 4.5, height = 7.5, scale = 1.3,
+       dev = cairo_pdf)
 ggsave(file.path(OUTPUT_DIR, "figure3.png"), width = 4.5, height = 7.5, scale = 1.3,
+       dpi = 600)
+
+plot_bad_fits(data = mse5_select[scenario %like% "^lin"])
+ggsave(file.path(OUTPUT_DIR, "suppfig7.pdf"), width = 3.5, height = 7.5, scale = 1.3,
+       dev = cairo_pdf)
+ggsave(file.path(OUTPUT_DIR, "suppfig7.png"), width = 3.5, height = 7.5, scale = 1.3,
        dpi = 600)
 
 
 ##########################################################################################
-## SUPPLEMENTAL FIGURE 1-4: SIMULATION PLOTS ##
+## SUPPLEMENTAL FIGURE 1-4, 8, 9: SIMULATION PLOTS ##
 ##########################################################################################
 
 plot_curves <- function(dataset, title, numsim = 6, numsubid = 100,
@@ -355,7 +380,7 @@ plot_curves <- function(dataset, title, numsim = 6, numsubid = 100,
           axis.title.y = element_markdown(margin = margin(r  = 15)))
 
   FNAME <- file.path(OUTPUT_DIR, filename)
-  ggsave(paste0(FNAME, ".pdf"), width = win, height = hin)
+  ggsave(paste0(FNAME, ".pdf"), width = win, height = hin, dev = cairo_pdf)
   ggsave(paste0(FNAME, ".png"), width = win, height = hin, dpi = dpi)
 }
 
@@ -374,6 +399,14 @@ plot_curves(dataset = sims$simlog_homo,
 set.seed(49418884)
 plot_curves(dataset = sims$simlog_hetero,
             filename = "suppfig4", win = 6.5, hin = 6.5 / 1.35)
+
+set.seed(78383998)
+plot_curves(dataset = sims$simlin_homo,
+            filename = "suppfig8", win = 6.5, hin = 6.5 / 1.35)
+
+set.seed(23133345)
+plot_curves(dataset = sims$simlin_hetero,
+            filename = "suppfig9", win = 6.5, hin = 6.5 / 1.35)
 
 
 ##########################################################################################
@@ -426,5 +459,5 @@ plot_estdtt0 <- function(post_apos = FALSE) {
 
 plot_estdtt0() + plot_estdtt0(TRUE)
 
-ggsave(file.path(OUTPUT_DIR, "suppfig5.pdf"), width = 8.5, height = 4.4)
+ggsave(file.path(OUTPUT_DIR, "suppfig5.pdf"), width = 8.5, height = 4.4, dev = cairo_pdf)
 ggsave(file.path(OUTPUT_DIR, "suppfig5.png"), width = 8.5, height = 4.4, dpi = 600)

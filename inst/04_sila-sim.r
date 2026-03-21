@@ -57,6 +57,8 @@ fmt_simexp_homo   <- fmt_sim(simlist$simexp_homo)
 fmt_simexp_hetero <- fmt_sim(simlist$simexp_hetero)
 fmt_simlog_homo   <- fmt_sim(simlist$simlog_homo)
 fmt_simlog_hetero <- fmt_sim(simlist$simlog_hetero)
+fmt_simlin_homo   <- fmt_sim(simlist$simlin_homo)
+fmt_simlin_hetero <- fmt_sim(simlist$simlin_hetero)
 
 
 ##########################################################################################
@@ -69,6 +71,8 @@ fitlist[["simexp_homo"]]   <- fit_sila(fmt_simexp_homo)
 fitlist[["simexp_hetero"]] <- fit_sila(fmt_simexp_hetero)
 fitlist[["simlog_homo"]]   <- fit_sila(fmt_simlog_homo)
 fitlist[["simlog_hetero"]] <- fit_sila(fmt_simlog_hetero)
+fitlist[["simlin_homo"]]   <- fit_sila(fmt_simlin_homo)
+fitlist[["simlin_hetero"]] <- fit_sila(fmt_simlin_hetero)
 
 
 ##########################################################################################
