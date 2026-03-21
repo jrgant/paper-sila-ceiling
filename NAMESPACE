@@ -2,6 +2,7 @@
 
 export(e)
 export(gen_exponential)
+export(gen_linear)
 export(gen_logistic)
 export(rng_info)
 export(simulate_curves)

@@ -3,11 +3,14 @@
 \name{gen_logistic}
 \alias{gen_logistic}
 \alias{gen_exponential}
+\alias{gen_linear}
 \title{Curve-generating functions}
 \usage{
 gen_logistic(x, L, k = 1, x0 = 0, offset = 0)
 
-gen_exponential(x, k, x0, offset)
+gen_exponential(x, k, x0, offset = 0)
+
+gen_linear(x, k, b)
 }
 \arguments{
 \item{x}{Point at which to evaluate function}
@@ -16,11 +19,13 @@ gen_exponential(x, k, x0, offset)
 
 \item{k}{Rate parameter}
 
-\item{x0}{Midpoint of the logistic curve}
+\item{x0}{Midpoint of the exponentential and logistic curve}
 
 \item{offset}{For the exponential function, the vertical shift. For the logistic
 function, must be <= 0 (the default); setting it allows the logistic function
 to elicit values < 0 while maintaining the desired maximum.}
+
+\item{b}{Y-intercept for the linear model}
 }
 \description{
 Curve-generating functions
