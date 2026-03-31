@@ -51,7 +51,7 @@ names(dxsum) <- tolower(names(dxsum))
 setkeyv(dxsum, c("rid", "examdate"))
 
 ## subset to columns needed for estimation
-berk <- berk[, .(rid, scandate, centiloids)]
+berk <- berk[, .(rid, scandate, centiloids, tracer)]
 ptdemog <- ptdemog[, .(rid, visdate, ptgender,
                        ptdob = as.IDate(paste0(ptdob, "/01"), format = "%m/%Y/%d"))]
 # with this column subset, need to drop duplicate rows
