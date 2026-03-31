@@ -169,21 +169,6 @@ min_centiloids <- min(berkadni$centiloids, na.rm = TRUE)
 
 
 ##########################################################################################
-## COPY OBJECTS TO DATA DIRECTORY ##
-##########################################################################################
-
-usethis::use_data(
-  num_scan_props,
-  scan_lag_days,
-  agedist_first_scan,
-  min_centiloids,
-  droptable,
-  overwrite = TRUE,
-  internal = FALSE
-)
-
-
-##########################################################################################
 ## ADD VARIABLES to EMPIRICAL DATASET ##
 ##########################################################################################
 
@@ -217,6 +202,21 @@ berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == 1, "CN",
 berkadni[, .N, keyby = .(dx_bl, dx_bl_clean)]
 berkadni[, .N, keyby = .(dx_scan, dx_scan_clean)]
 berkadni[, .N, keyby = .(dx_bl_clean, dx_scan_clean)]
+
+
+##########################################################################################
+## COPY OBJECTS TO DATA DIRECTORY ##
+##########################################################################################
+
+usethis::use_data(
+  num_scan_props,
+  scan_lag_days,
+  agedist_first_scan,
+  min_centiloids,
+  droptable,
+  overwrite = TRUE,
+  internal = FALSE
+)
 
 
 ##########################################################################################
