@@ -36,7 +36,7 @@ catvars  <- c("ptgender", "dx_bl_clean", "dx_scan_clean")
 contvars <- c("days_since_bl", "age")
 
 tsum <- firstscan[, .SD, .SDcols = c(contvars, catvars, "multi")] |>
-  summarizor(by = "multi", overall_label = "Overall")
+  flextable::summarizor(by = "multi", overall_label = "Overall")
 
 class(tsum) <- c("data.table", class(tsum))
 
