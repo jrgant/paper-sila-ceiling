@@ -91,7 +91,9 @@ fig1a <- empsila$resfit |>
              linetype = "longdash") +
   geom_line(aes(y = val, group = subid), linewidth = 0.1, alpha = 0.1) +
   geom_point(aes(y = val), size = 0.5, alpha = 0.1) +
-  geom_line(aes(y = estval), color = "deep pink") +
+  geom_line(data = empsila$res$tsila,
+            aes(x = adtime, y = val),
+            color = "deep pink") +
   annotate("text", x = -Inf, y = 20 + 6,
            vjust = 0, hjust = 0,
            label = " A+ THRESHOLD",
