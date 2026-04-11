@@ -73,12 +73,7 @@ simexp_homo <- rbindlist(lapply(expRatesHomo, \(rate) {
   )
 }), idcol = "sim")
 attr(simexp_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s1_seed)
-attr(simexp_homo, "params") <- data.table(
-  sim    = seq_len(NSIM),
-  k      = expRatesHomo,
-  x0     = exp_x0_calc(expRatesHomo, apos = APOS_THRESHOLD + abs(EXP_OFFSET)),
-  offset = EXP_OFFSET
-)
+attr(simexp_homo, "params") <- unique(simexp_homo[, .(sim, k, x0, offset)])
 
 ## Scenario 2: Heterogeneous inter-individual rates
 s2_seed <- set_seed()
@@ -135,13 +130,7 @@ simlog_homo <- rbindlist(lapply(seq_len(NSIM), \(i) {
   )
 )}), idcol = "sim")
 attr(simlog_homo, "rng_info") <- list(rng_kind = RNGkind(), seed = s3_seed)
-attr(simlog_homo, "params") <- data.table(
-  sim = seq_len(NSIM),
-  L   = logFunMaxesHomo,
-  k   = logRatesHomo,
-  x0  = log_x0_calc(L = logFunMaxesHomo, k = logRatesHomo, apos = APOS_THRESHOLD),
-  offset = LOG_OFFSET
-)
+attr(simlog_homo, "params") <- unique(simlog_homo[, .(sim, L, k, x0, offset)])
 
 ## Scenario 4: Heterogeneous inter-individual rates and maxima
 s4_seed <- set_seed()
