@@ -123,7 +123,7 @@ simlog_homo <- rbindlist(lapply(seq_len(NSIM), \(i) {
     expr = e(
       L = fmax,
       k = frate,
-      x0 = log_x0_calc(L + abs(LOG_OFFSET), k, apos_threshold),
+      x0 = log_x0_calc(L + abs(LOG_OFFSET), k, apos_threshold + abs(LOG_OFFSET)),
       offset = LOG_OFFSET
     ),
     env = list(fmax = curr_fmax, frate = curr_rate)
@@ -147,7 +147,7 @@ simlog_hetero <- rbindlist(lapply(seq_len(NSIM), \(i) {
       expr = e(
         L = rnorm(NDAT, mean = fmax_mean, sd = fmax_mean * SIGMA_HETERO_MULTIPLIER),
         k = rnorm(NDAT, mean = rate_mean, sd = rate_mean * SIGMA_HETERO_MULTIPLIER),
-        x0 = log(((L + abs(LOG_OFFSET)) / apos_threshold) - 1) / k,
+        x0 = log_x0_calc(L + abs(LOG_OFFSET), k, apos_threshold + abs(LOG_OFFSET)),
         offset = LOG_OFFSET
       ),
       env = list(fmax_mean = curr_fmax_mean, rate_mean = curr_rate_mean)
@@ -159,7 +159,9 @@ attr(simlog_hetero, "params") <- data.table(
   sim = seq_len(NSIM),
   L   = logFunMaxesHetero + abs(LOG_OFFSET),
   k   = logRatesHetero,
-  x0  = log_x0_calc(L = logFunMaxesHetero, k = logRatesHetero, apos = APOS_THRESHOLD),
+  x0  = log_x0_calc(L = logFunMaxesHetero + abs(LOG_OFFSET),
+                    k = logRatesHetero,
+                    apos = APOS_THRESHOLD + abs(LOG_OFFSET)),
   offset = LOG_OFFSET
 )
 
