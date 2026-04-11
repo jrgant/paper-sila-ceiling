@@ -22,8 +22,8 @@ lu_subid_all_multiscan <- berkadni[, .(
   two_cl = sum(!is.na(centiloids)) > 1
 ), by = rid][num_scans > 1 & two_cl == TRUE][, rid]
 
-berksub <- berkadni[rid %in% lu_subid_all_multiscan]
-setnames(berksub, c("rid", "centiloids"), c("subid", "val"))
+berksub <- berkadni[rid %in% lu_subid_all_multiscan
+                    ][, .(subid = rid, age, val = centiloids)]
 
 # NOTE: Fitting SILA will throw warnings due to perfect fits in some of the drawn
 #       samples. Traceable to lm() and LOESS fits.
