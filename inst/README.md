@@ -18,7 +18,7 @@ and then used by subsequent scripts.
 
 ## Reproducibility
 
-Most scripts use the standard `set.seed()`, but `03_simulate.r` sets a seed during each new run and then saves that seed to the simulation object. To reproduce the simulated datasets in `output/`, you'll need to retrieve the seeds for each simulation scenario replace any lines that call `set_seed()` with a standard call to `set.seed()`.
+Most scripts use the standard `set.seed()`, but `03_simulate.r` sets a seed during each new run and then saves that seed to the simulation object. To reproduce the simulated datasets in `output/`, you'll need to retrieve the seeds for each simulation scenario and replace any lines that call `set_seed()` with a standard call to `set.seed()`.
 
 You can retrieve the seeds as follows:
 
