@@ -18,4 +18,6 @@ The directories are organized as follows:
 Scripts in `inst` use `pkgload::load_all()` to load the package namespace. For help regarding data and functions, use a command like `?silaceiling::gen_exponential` rather than `?gen_exponential`.
 
 
+## Dependencies
 
+The package `DESCRIPTION` contains information on requirements to run the code. Make sure you have everything listed in `Imports` and `Remotes` installed. An easy way to do so might be to run `devtools::install_deps()` from the project root.
