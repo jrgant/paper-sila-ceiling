@@ -33,12 +33,12 @@ simsila <- qs_read(file.path(OUTPUT_DIR, "simulated-sila-fits.qs2"))
 
 # Simulated SILA fits
 silasim_list <- rbindlist(list(
-  exphom = rbindlist(lapply(simsila$simexp_homo,   \(.x) .x$resfit)),
-  exphet = rbindlist(lapply(simsila$simexp_hetero, \(.x) .x$resfit)),
-  loghom = rbindlist(lapply(simsila$simlog_homo,   \(.x) .x$resfit)),
-  loghet = rbindlist(lapply(simsila$simlog_hetero, \(.x) .x$resfit)),
-  linhom = rbindlist(lapply(simsila$simlin_homo,   \(.x) .x$resfit)),
-  linhet = rbindlist(lapply(simsila$simlin_hetero, \(.x) .x$resfit))
+  exphom = rbindlist(lapply(simsila$simexp_homo,   \(.x) .x$res$tsila), idcol = "sim"),
+  exphet = rbindlist(lapply(simsila$simexp_hetero, \(.x) .x$res$tsila), idcol = "sim"),
+  loghom = rbindlist(lapply(simsila$simlog_homo,   \(.x) .x$res$tsila), idcol = "sim"),
+  loghet = rbindlist(lapply(simsila$simlog_hetero, \(.x) .x$res$tsila), idcol = "sim"),
+  linhom = rbindlist(lapply(simsila$simlin_homo,   \(.x) .x$res$tsila), idcol = "sim"),
+  linhet = rbindlist(lapply(simsila$simlin_hetero, \(.x) .x$res$tsila), idcol = "sim")
 ), idcol = "scenario")
 
 silasim_list[, `:=`(
@@ -54,7 +54,7 @@ silasim_list[, `:=`(
 )]
 
 silasim_list[, variat := factor(variat, levels = c("Homogeneous", "Heterogeneous"))]
-setkeyv(silasim_list, c("scenario", "sim", "estdtt0"))
+setkeyv(silasim_list, c("scenario", "sim", "adtime"))
 
 # Global aesthetics
 ANNOTATE_COLOR <- "#BF2483"
@@ -234,7 +234,7 @@ ggsave(file.path(OUTPUT_DIR, "figure1.png"), width = 8.5, height = 3, scale = 1.
 
 plot_sila_fits <- function(data) {
   data |>
-    ggplot(aes(estdtt0, estval)) +
+    ggplot(aes(adtime, val)) +
     geom_vline(aes(xintercept = 0), color = GUIDELINE_COLOR, linetype = "longdash") +
     geom_hline(aes(yintercept = APOS_THRESHOLD),
                color = GUIDELINE_COLOR, linetype = "longdash") +
@@ -285,19 +285,19 @@ laws[, scenario := fcase(scenario == "simexp_homo",   "exphom",
 # Times at which SILA made predictions
 # We are using SILA's estimated time of amyloid positivity onset here and so are
 # accounting for error in the shape of the curve only
-siladat <- silasim_list[, .(estdtt0 = estdtt0, estval = estval),
+siladat <- silasim_list[, .(adtime = adtime, val = val),
                         keyby = .(scenario, sim)]
 
 # Merge aggregation laws with SILA estimates (keep only the -20:40 time window)
 predmatch <- merge(siladat,
                    laws,
-                   by = c("scenario", "sim"))[estdtt0 %between% c(-20, 40)]
-predmatch[scenario %like% "exp", true_cl := gen_exponential(estdtt0, k, x0, offset)]
-predmatch[scenario %like% "log", true_cl := gen_logistic(estdtt0, L, k, x0, offset)]
-predmatch[scenario %like% "lin", true_cl := gen_linear(estdtt0, k, b)]
+                   by = c("scenario", "sim"))[adtime %between% c(-20, 40)]
+predmatch[scenario %like% "exp", true_cl := gen_exponential(adtime, k, x0, offset)]
+predmatch[scenario %like% "log", true_cl := gen_logistic(adtime, L, k, x0, offset)]
+predmatch[scenario %like% "lin", true_cl := gen_linear(adtime, k, b)]
 
 # Calculate squared error between SILA prediction (estval) and "true" centiloids
-predmatch[, sqerr := (estval - true_cl)^2]
+predmatch[, sqerr := (val - true_cl)^2]
 msedat <- predmatch[, .(rmse = sqrt(mean(sqerr))), keyby = .(scenario, sim)]
 
 # 10 worst fits by MSE for each scenario
@@ -325,8 +325,8 @@ mse5_select[, `:=`(
 
 plot_bad_fits <- function(data) {
   data |>
-    ggplot(aes(estdtt0, color = scenario, group = sim)) +
-    geom_line(aes(y = estval, linetype = "SILA")) +
+    ggplot(aes(adtime, color = scenario, group = sim)) +
+    geom_line(aes(y = val, linetype = "SILA")) +
     geom_line(aes(y = true_cl, linetype = "Truth")) +
     geom_text(aes(x = Inf, y = -Inf,
                   label = paste("RMSE:", format(rmse, digits = 2, nsmall = 2))),
