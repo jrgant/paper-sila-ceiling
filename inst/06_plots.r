@@ -18,6 +18,10 @@ source(here::here("inst", "00_constants.r"))
 berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
 empsila <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_berkeley.qs2"))
 setDT(empsila$resfit)
+empsila_impute <- qs_read(
+  file.path(PRIVATE_OUTPUT_DIR, "sila_empirical_sample_impute_berkeley.qs2")
+)
+setDT(empsila_impute$resfit)
 
 berkadni <- qs_read(file.path(PRIVATE_OUTPUT_DIR, "berkadni.qs2"))
 lu_subid_all_multiscan <- berkadni[, .(
@@ -229,6 +233,72 @@ ggsave(file.path(OUTPUT_DIR, "figure1.png"), width = 8.5, height = 3, scale = 1.
 
 
 ##########################################################################################
+## SUPPLEMENTARY FIGURE 8: SILA FIT to IMPUTED DATA ##
+##########################################################################################
+
+lapply(empsila_impute$res, setDT)
+setDT(empsila_impute$resfit)
+
+empsila_impute$resfit[berkadni[!is.na(yod), .(subid = unique(rid), death = 1)],
+                      on = .(subid),
+                      j = `:=`(death = i.death)]
+empsila_impute$resfit[is.na(death), death := 0]
+
+## Supporting information (difference in estimated age at A+)
+rbind(
+  empsila$resfit[, .(estaget0 = first(estaget0)),
+                 by = subid][, .(analysis = "main",
+                                 mean = mean(estaget0),
+                                 sd = sd(estaget0))],
+  empsila_impute$resfit[, .(estaget0 = first(estaget0)),
+                        by = subid][, .(analysis = "imputed",
+                                        mean = mean(estaget0),
+                                        sd = sd(estaget0))]
+)
+
+## Supporting information (difference in predicted centiloids at 20 years)
+MAIN_CL_20YR <- empsila$res$tsila[adtime == 20, val]
+IMPU_CL_20YR <- empsila_impute$res$tsila[adtime == 20, val]
+MAIN_CL_20YR - IMPU_CL_20YR
+
+sfig <- empsila_impute$resfit |>
+  ggplot(aes(x = estdtt0)) +
+  geom_hline(aes(yintercept = APOS_THRESHOLD),
+             color = GUIDELINE_COLOR,
+             linetype = "longdash") +
+  geom_vline(aes(xintercept = 0),
+             color = GUIDELINE_COLOR,
+             linetype = "longdash") +
+  geom_line(aes(y = val, group = subid),
+            linewidth = 0.1, alpha = 0.1) +
+  geom_point(aes(y = val),
+             size = 0.5, alpha = 0.1) +
+  geom_line(data = empsila$res$tsila,
+            aes(x = adtime, y = val, color = "Main")) + 
+  geom_line(data = empsila_impute$res$tsila,
+            aes(x = adtime, y = val, color = "Imputed")) +
+  annotate("text", x = -Inf, y = 20 + 6,
+           vjust = 0, hjust = 0,
+           label = " A+ THRESHOLD",
+           color = GUIDELINE_COLOR, size = 4) +
+  annotate("text", x = 0 + 1.2, y = Inf,
+           vjust = 1, hjust = 1, angle = 90,
+           label = "A+ ONSET ",
+           color = GUIDELINE_COLOR, size = 4) +
+  scale_x_continuous(expand = c(0, 0),
+                     limits = c(-40, max(empsila_impute$resfit$estdtt0))) +
+  scale_color_manual("Analysis", values = c("deep pink", "pink")) +
+  labs(x = "YEARS",
+       y = "CENTILOIDS") +
+  theme(legend.position = "inside",
+        legend.position.inside = c(0.10, 0.925))
+
+sfig
+ggsave(file.path(OUTPUT_DIR, "suppfig08.pdf"), width = 6.5, height = 6.5, dev = cairo_pdf)
+ggsave(file.path(OUTPUT_DIR, "suppfig08.png"), width = 6.5, height = 6.5, dpi = 600)
+
+
+##########################################################################################
 ## FIGURE 2 and SUPPLEMENTARY FIGURE 6: SILA FITS to SIMULATED DATA ##
 ##########################################################################################
 
@@ -260,8 +330,8 @@ ggsave(file.path(OUTPUT_DIR, "figure2.pdf"), width = 6.5, height = 6.5, dev = ca
 ggsave(file.path(OUTPUT_DIR, "figure2.png"), width = 6.5, height = 6.5, dpi = 600)
 
 plot_sila_fits(data = silasim_list[genfun == "Linear"])
-ggsave(file.path(OUTPUT_DIR, "suppfig6.pdf"), width = 6.5, height = 3.25, dev = cairo_pdf)
-ggsave(file.path(OUTPUT_DIR, "suppfig6.png"), width = 6.5, height = 3.25, dpi = 600)
+ggsave(file.path(OUTPUT_DIR, "suppfig06.pdf"), width = 6.5, height = 3.25, dev = cairo_pdf)
+ggsave(file.path(OUTPUT_DIR, "suppfig06.png"), width = 6.5, height = 3.25, dpi = 600)
 
 
 ##########################################################################################
@@ -350,9 +420,9 @@ ggsave(file.path(OUTPUT_DIR, "figure3.png"), width = 4.5, height = 7.5, scale = 
        dpi = 600)
 
 plot_bad_fits(data = mse5_select[scenario %like% "^lin"])
-ggsave(file.path(OUTPUT_DIR, "suppfig7.pdf"), width = 3.5, height = 7.5, scale = 1.3,
+ggsave(file.path(OUTPUT_DIR, "suppfig07.pdf"), width = 3.5, height = 7.5, scale = 1.3,
        dev = cairo_pdf)
-ggsave(file.path(OUTPUT_DIR, "suppfig7.png"), width = 3.5, height = 7.5, scale = 1.3,
+ggsave(file.path(OUTPUT_DIR, "suppfig07.png"), width = 3.5, height = 7.5, scale = 1.3,
        dpi = 600)
 
 
@@ -388,27 +458,27 @@ plot_curves <- function(dataset, title, numsim = 6, numsubid = 100,
 
 set.seed(893875)
 plot_curves(dataset = sims$simexp_homo,
-            filename = "suppfig1", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig01", win = 6.5, hin = 6.5 / 1.35)
 
 set.seed(92383484)
 plot_curves(dataset = sims$simexp_hetero,
-            filename = "suppfig2", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig02", win = 6.5, hin = 6.5 / 1.35)
 
 set.seed(23344588)
 plot_curves(dataset = sims$simlog_homo,
-            filename = "suppfig3", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig03", win = 6.5, hin = 6.5 / 1.35)
 
 set.seed(49418884)
 plot_curves(dataset = sims$simlog_hetero,
-            filename = "suppfig4", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig04", win = 6.5, hin = 6.5 / 1.35)
 
 set.seed(78383998)
 plot_curves(dataset = sims$simlin_homo,
-            filename = "suppfig8", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig09", win = 6.5, hin = 6.5 / 1.35)
 
 set.seed(23133345)
 plot_curves(dataset = sims$simlin_hetero,
-            filename = "suppfig9", win = 6.5, hin = 6.5 / 1.35)
+            filename = "suppfig10", win = 6.5, hin = 6.5 / 1.35)
 
 
 ##########################################################################################
@@ -461,5 +531,5 @@ plot_estdtt0 <- function(post_apos = FALSE) {
 
 plot_estdtt0() + plot_estdtt0(TRUE)
 
-ggsave(file.path(OUTPUT_DIR, "suppfig5.pdf"), width = 8.5, height = 4.4, dev = cairo_pdf)
-ggsave(file.path(OUTPUT_DIR, "suppfig5.png"), width = 8.5, height = 4.4, dpi = 600)
+ggsave(file.path(OUTPUT_DIR, "suppfig05.pdf"), width = 8.5, height = 4.4, dev = cairo_pdf)
+ggsave(file.path(OUTPUT_DIR, "suppfig05.png"), width = 8.5, height = 4.4, dpi = 600)

@@ -54,12 +54,21 @@ dxsum <- fread(file.path(ADNI_PATH, qp("DXSUM")))[!is.na(EXAMDATE)]
 names(dxsum) <- tolower(names(dxsum))
 setkeyv(dxsum, c("rid", "examdate"))
 
+## year of death (from adverse events table)
+deaths <- rbind(
+  fread(file.path(ADNI_PATH, "RECADV_16Jun2026.csv"))[SITEID != 381, .(RID, AEHDTHDT)],
+  fread(file.path(ADNI_PATH, "ADVERSE_16Jun2026.csv"))[SITEID != 381, .(RID, AEHDTHDT)]
+)[AEHDTHDT < as.IDate(ADNI_DL_DATE, format = "%d%b%Y")]
+names(deaths) <- tolower(names(deaths))
+setkey(deaths, "rid")
+
 ## subset to columns needed for estimation
 berk <- berk[, .(rid, scandate, centiloids, tracer)]
 ptdemog <- ptdemog[, .(rid, visdate, ptgender,
                        ptdob = as.IDate(paste0(ptdob, "/01"), format = "%m/%Y/%d"))]
-# with this column subset, need to drop duplicate rows
+# with these column subsets, need to drop duplicate rows
 dxsum <- unique(dxsum[, .(rid, examdate, diagnosis)])
+deaths <- unique(deaths[, .(rid, yod = year(aehdthdt))])
 
 
 ##########################################################################################
@@ -128,6 +137,8 @@ berkadni[, `:=`(age_visdate_bl = (visdate_bl - ptdob) / 365.25,
                 age_examdate_bl = (examdate_bl - ptdob) / 365.25,
                 age_at_scan = (scandate - ptdob) / 365.25)]
 
+berkadni[deaths, on = .(rid), j = `:=`(yod = i.yod)]
+
 NROW_BERKADNI_INIT       <- berkadni[, .N]
 NRID_BERKADNI_INIT       <- berkadni[, uniqueN(rid)]
 NSCAN_MISS_CL            <- berkadni[is.na(centiloids), .N]
@@ -190,6 +201,9 @@ dxsum[, joindate := examdate]
 # dx_scan = diagnosis as of scandate
 berkadni <- dxsum[, .(rid, joindate, dx_scan = diagnosis, dx_date = examdate)
                   ][berkadni, on = .(rid, joindate), roll = TRUE]
+
+# time of scan date relative to death
+berkadni[, years_death := year(scandate) - yod]
 
 # clean variables
 berkadni[, `:=`(dx_bl_clean = fcase(dx_bl == 1, "CN",
